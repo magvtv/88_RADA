@@ -6,22 +6,26 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
 # Download stopwords if not available
-import nltk
-nltk.download('punkt')
-nltk.download('stopwords')
+# import nltk
+# nltk.download('punkt')
+# nltk.download('stopwords')
 
-# Define stopwords
-stop_words = set(stopwords.words('english'))
+# Define the directories
+BASE_DIR = os.path.dirname(os.path.abspath(
+    __file__))  # Gets the script's directory
+PDF_DIR = os.path.join(BASE_DIR, "ndma24")  # Folder with NDMA bulletins
+# Corpus file inside data/
+OUTPUT_FILE = os.path.join(BASE_DIR, "ndma_corpus.txt")
 
-# Directory containing the PDFs
-pdf_dir = "src/data/ndma24"
-
-
-if not os.path.exists(pdf_dir):
+# Ensure the ndma24 folder exists
+if not os.path.exists(PDF_DIR):
     print(
         f"Error: The directory {pdf_dir} does not exist. Please check the directory name or path "
     )
     exit()
+
+# Define stopwords
+stop_words = set(stopwords.words('english'))
 
 
 def extract_text_from_pdf(pdf_path):
@@ -49,17 +53,17 @@ def clean_text(text):
 
 # Extract and clean text from all bulletins
 all_texts = []
-for pdf_file in os.listdir(pdf_dir):
+for pdf_file in os.listdir(PDF_DIR):
     if pdf_file.endswith(".pdf"):
-        pdf_path = os.path.join(pdf_dir, pdf_file)
+        pdf_path = os.path.join(PDF_DIR, pdf_file)
         text = extract_text_from_pdf(pdf_path)
         cleaned_text = clean_text(text)
         all_texts.append(cleaned_text)
 
-# Combine all bulletins into one large corpus and save in txt file
-output_file = "ndma_corpus.txt"
 
-with open(output_file, "w", encoding="utf-8") as file:
+with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
     for text in all_texts:  # 'all_texts' contains preprocessed text from all pdf
         file.write(text + "\n\n\n")  # separate each document with a blank line
-print(f"Corpus saved to {output_file}")
+
+
+print(f"Corpus saved to {OUTPUT_FILE}")
