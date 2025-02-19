@@ -15,7 +15,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(
     __file__))  # Gets the script's directory
 PDF_DIR = os.path.join(BASE_DIR, "ndma24")  # Folder with NDMA bulletins
 # Corpus file inside data/
-OUTPUT_FILE = os.path.join(BASE_DIR, "ndma_corpus.txt")
+OUTPUT_FILE = os.path.join(BASE_DIR, "ndma_corpus_24.txt")
 
 # Ensure the ndma24 folder exists
 if not os.path.exists(PDF_DIR):
