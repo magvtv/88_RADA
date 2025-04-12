@@ -40,12 +40,12 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 my-4">
       {/* Dashboard Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col px-4 mt-4 gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">{currentDate}</p>
+          <h1 className="text-2xl ml-4 font-bold tracking-tight">Dashboard</h1>
+          <p className="ml-4 text-muted-foreground">{currentDate}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -65,7 +65,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Today's Forecast Card */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid md:mx-6 sm:mx-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Today's Forecast</CardTitle>
@@ -122,82 +122,86 @@ export default function DashboardPage() {
       </div>
 
       {/* Temperature Trend Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Temperature Trend</CardTitle>
-          <CardDescription>7-day temperature forecast</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {forecastLoading || !trendsData.length ? (
-            <Skeleton className="h-[350px] w-full rounded-lg" />
-          ) : (
-            <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={trendsData}
-                  margin={{
-                    top: 20,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
-                  />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value) => [`${value}°C`, "Temperature"]}
-                    labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#8884d8"
-                    activeDot={{ r: 8 }}
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="md:mx-6 sm:mx-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Temperature Trend</CardTitle>
+            <CardDescription>7-day temperature forecast</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {forecastLoading || !trendsData.length ? (
+              <Skeleton className="h-[350px] w-full rounded-lg" />
+            ) : (
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                      data={trendsData}
+                      margin={{
+                      top: 20,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
+                    />
+                    <YAxis />
+                    <Tooltip
+                      formatter={(value) => [`${value}°C`, "Temperature"]}
+                      labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#8884d8"
+                      activeDot={{ r: 8 }}
+                      strokeWidth={1.5}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Weekly Forecast Preview */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle>Weekly Forecast</CardTitle>
-            <CardDescription>Next 7 days outlook</CardDescription>
-          </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/forecast">
-              <span>Full Forecast</span>
-              <ActionIcons.Next className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {forecastLoading || !weeklyForecast ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {/* Use individual skeletons instead of mapping */}
-              <Skeleton className="h-[150px] w-full rounded-lg" />
-              <Skeleton className="h-[150px] w-full rounded-lg" />
-              <Skeleton className="h-[150px] w-full rounded-lg" />
-              <Skeleton className="h-[150px] w-full rounded-lg" />
+      <div className="md:mx-6 sm:mx-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle>Weekly Forecast</CardTitle>
+              <CardDescription>Next 7 days outlook</CardDescription>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {weeklyForecast.forecasts.slice(0, 4).map((forecast) => (
-                <ForecastCard key={forecast.date} forecast={forecast} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/forecast">
+                <span>Full Forecast</span>
+                <ActionIcons.Next className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {forecastLoading || !weeklyForecast ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {/* Use individual skeletons instead of mapping */}
+                <Skeleton className="h-[150px] w-full rounded-lg" />
+                <Skeleton className="h-[150px] w-full rounded-lg" />
+                <Skeleton className="h-[150px] w-full rounded-lg" />
+                <Skeleton className="h-[150px] w-full rounded-lg" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {weeklyForecast.forecasts.slice(0, 4).map((forecast) => (
+                  <ForecastCard key={forecast.date} forecast={forecast} />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
