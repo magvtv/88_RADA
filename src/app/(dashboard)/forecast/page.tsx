@@ -179,7 +179,7 @@ export default function ForecastPage() {
                       dataKey="drought"
                       stroke="#FF6B6B"
                       activeDot={{ r: 8 }}
-                      strokeWidth={2}
+                      strokeWidth={1}
                       name="Drought"
                     />
                     <Line
@@ -187,7 +187,7 @@ export default function ForecastPage() {
                       dataKey="flood"
                       stroke="#4ECDC4"
                       activeDot={{ r: 8 }}
-                      strokeWidth={2}
+                      strokeWidth={1}
                       name="Flood"
                     />
                     <Legend />

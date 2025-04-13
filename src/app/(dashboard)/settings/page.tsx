@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useUserStore } from "@/store";
 import { useTheme } from "@/components/ui/theme-provider";
-import type { TemperatureUnit, Language } from "@/types/user";
+import type { Language } from "@/types/user";
 import { toast } from "sonner";
 import { UIIcons } from "@/components/ui/icons";
 
@@ -45,10 +45,6 @@ export default function SettingsPage() {
     toast.success(`Language changed to ${languages.find(l => l.code === lang)?.label || lang}`);
   };
 
-  const handleTemperatureUnitChange = (unit: TemperatureUnit) => {
-    setTemperatureUnit(unit);
-    toast.success(`Temperature unit changed to ${unit === "celsius" ? "Celsius (°C)" : "Fahrenheit (°F)"}`);
-  };
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
@@ -187,27 +183,6 @@ export default function SettingsPage() {
                     {lang.label}
                   </Button>
                 ))}
-              </div>
-            </div>
-
-            {/* Temperature Unit Setting */}
-            <div className="space-y-4">
-              <div className="font-medium">Temperature Unit</div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={userPreferences.temperatureUnit === "celsius" ? "default" : "outline"}
-                  className="justify-start"
-                  onClick={() => handleTemperatureUnitChange("celsius")}
-                >
-                  Celsius (°C)
-                </Button>
-                <Button
-                  variant={userPreferences.temperatureUnit === "fahrenheit" ? "default" : "outline"}
-                  className="justify-start"
-                  onClick={() => handleTemperatureUnitChange("fahrenheit")}
-                >
-                  Fahrenheit (°F)
-                </Button>
               </div>
             </div>
           </CardContent>

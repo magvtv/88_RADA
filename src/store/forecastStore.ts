@@ -41,6 +41,7 @@ export const useForecastStore = create<ForecastState>((set) => ({
 
   // Actions
   fetchWeeklyForecast: async () => {
+    set({loading: true})
     try {
       set({ loading: true, error: null });
       const data = await getWeeklyForecast();
@@ -55,6 +56,7 @@ export const useForecastStore = create<ForecastState>((set) => ({
   },
 
   fetchTodayForecast: async () => {
+    set({ loading: true });
     try {
       set({ loading: true, error: null });
       const data = await getTodayForecast();
@@ -82,7 +84,8 @@ export const useForecastStore = create<ForecastState>((set) => ({
     }
   },
 
-  fetchForecastTrends: async (type = "temperature", days = 7) => {
+  fetchForecastTrends: async (type = "drought", days = 7) => {
+    set({ loading: true });
     try {
       set({ loading: true, error: null });
       const data = await getForecastTrends(type, days);
