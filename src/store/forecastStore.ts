@@ -2,7 +2,8 @@ import { create } from "zustand";
 import type {
   WeeklyForecast,
   DailyForecast,
-  ForecastChartData
+  ForecastChartData,
+  CombinedForecastChartData
 } from "@/types/forecast";
 import {
   getWeeklyForecast,
@@ -14,7 +15,7 @@ import {
 interface ForecastState {
   weeklyForecast: WeeklyForecast | null;
   todayForecast: DailyForecast | null;
-  trendsData: ForecastChartData[];
+  trendsData: ForecastChartData[] | CombinedForecastChartData[];
   loading: boolean;
   error: string | null;
 

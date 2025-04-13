@@ -1,10 +1,6 @@
 export interface WeatherData {
-  temperature: number;
-  humidity: number;
-  pressure: number;
-  windSpeed: number;
-  windDirection: string;
-  precipitation: number;
+  drought: number;
+  flood: number;
   condition: string; // e.g., 'Sunny', 'Rainy', 'Cloudy'
 }
 
@@ -31,4 +27,10 @@ export interface LocationData {
     latitude: number;
     longitude: number;
   };
+}
+
+export interface CombinedForecastChartData {
+  date: string;
+  drought: number;
+  flood: number;
 }

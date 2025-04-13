@@ -1,9 +1,11 @@
+import { Cloudy } from "lucide-react";
 import { apiGet } from "./api";
 import {
   type WeeklyForecast,
   type DailyForecast,
   type ForecastChartData,
-  LocationData
+  LocationData,
+  CombinedForecastChartData
 } from "@/types/forecast";
 
 const ENDPOINTS = {
@@ -22,12 +24,8 @@ const mockWeeklyForecast: WeeklyForecast = {
       date: "2025-04-11",
       day: "Friday",
       weatherData: {
-        temperature: 25,
-        humidity: 60,
-        pressure: 1015,
-        windSpeed: 12,
-        windDirection: "NE",
-        precipitation: 0,
+        drought: 46,
+        flood: 21,
         condition: "Sunny",
       },
     },
@@ -35,12 +33,8 @@ const mockWeeklyForecast: WeeklyForecast = {
       date: "2025-04-12",
       day: "Saturday",
       weatherData: {
-        temperature: 27,
-        humidity: 65,
-        pressure: 1012,
-        windSpeed: 10,
-        windDirection: "E",
-        precipitation: 0,
+        drought: 93,
+        flood: 12,
         condition: "Partly Cloudy",
       },
     },
@@ -48,12 +42,8 @@ const mockWeeklyForecast: WeeklyForecast = {
       date: "2025-04-13",
       day: "Sunday",
       weatherData: {
-        temperature: 22,
-        humidity: 75,
-        pressure: 1010,
-        windSpeed: 15,
-        windDirection: "SE",
-        precipitation: 40,
+        drought: 34,
+        flood: 67,
         condition: "Rainy",
       },
     },
@@ -61,12 +51,8 @@ const mockWeeklyForecast: WeeklyForecast = {
       date: "2025-04-14",
       day: "Monday",
       weatherData: {
-        temperature: 20,
-        humidity: 80,
-        pressure: 1008,
-        windSpeed: 18,
-        windDirection: "S",
-        precipitation: 60,
+        drought: 88,
+        flood: 39,
         condition: "Stormy",
       },
     },
@@ -74,12 +60,8 @@ const mockWeeklyForecast: WeeklyForecast = {
       date: "2025-04-15",
       day: "Tuesday",
       weatherData: {
-        temperature: 21,
-        humidity: 70,
-        pressure: 1011,
-        windSpeed: 14,
-        windDirection: "SW",
-        precipitation: 30,
+        drought: 72,
+        flood: 28,
         condition: "Cloudy",
       },
     },
@@ -87,12 +69,8 @@ const mockWeeklyForecast: WeeklyForecast = {
       date: "2025-04-16",
       day: "Wednesday",
       weatherData: {
-        temperature: 24,
-        humidity: 65,
-        pressure: 1013,
-        windSpeed: 10,
-        windDirection: "W",
-        precipitation: 10,
+        drought: 55,
+        flood: 45,
         condition: "Partly Cloudy",
       },
     },
@@ -100,12 +78,8 @@ const mockWeeklyForecast: WeeklyForecast = {
       date: "2025-04-17",
       day: "Thursday",
       weatherData: {
-        temperature: 26,
-        humidity: 55,
-        pressure: 1016,
-        windSpeed: 8,
-        windDirection: "NW",
-        precipitation: 0,
+        drought: 19,
+        flood: 65,
         condition: "Sunny",
       },
     },
@@ -114,13 +88,24 @@ const mockWeeklyForecast: WeeklyForecast = {
 };
 
 const mockTrendsData: ForecastChartData[] = [
-  { date: "2025-04-11", value: 25, type: "temperature" },
-  { date: "2025-04-12", value: 27, type: "temperature" },
-  { date: "2025-04-13", value: 22, type: "temperature" },
-  { date: "2025-04-14", value: 20, type: "temperature" },
-  { date: "2025-04-15", value: 21, type: "temperature" },
-  { date: "2025-04-16", value: 24, type: "temperature" },
-  { date: "2025-04-17", value: 26, type: "temperature" },
+  { date: "2025-04-11", value: 46, type: "drought" },
+  { date: "2025-04-12", value: 93, type: "drought" },
+  { date: "2025-04-13", value: 34, type: "drought" },
+  { date: "2025-04-14", value: 88, type: "drought" },
+  { date: "2025-04-15", value: 72, type: "drought" },
+  { date: "2025-04-16", value: 55, type: "drought" },
+  { date: "2025-04-17", value: 19, type: "drought" },
+];
+
+// mock data for combined forecast
+const mockCombinedTrendsData: CombinedForecastChartData[] = [
+  { date: "2025-04-11", drought: 46, flood: 21 },
+  { date: "2025-04-12", drought: 93, flood: 12 },
+  { date: "2025-04-13", drought: 34, flood: 67 },
+  { date: "2025-04-14", drought: 88, flood: 39 },
+  { date: "2025-04-15", drought: 72, flood: 28 },
+  { date: "2025-04-16", drought: 55, flood: 45 },
+  { date: "2025-04-17", drought: 19, flood: 65 },
 ];
 
 // Service functions
@@ -158,6 +143,7 @@ export async function getTodayForecast(): Promise<DailyForecast> {
   }
 }
 
+// Add this mock data for with the longitude and latitude location data
 export async function getForecastByLocation(
   latitude: number,
   longitude: number
@@ -181,9 +167,9 @@ export async function getForecastByLocation(
 }
 
 export async function getForecastTrends(
-  type = "temperature",
+  type = "drought",
   days = 7
-): Promise<ForecastChartData[]> {
+): Promise<ForecastChartData[] | CombinedForecastChartData[]> {
   try {
     // In a real implementation, this would call the API
     // return await apiGet<ForecastChartData[]>(
@@ -193,7 +179,12 @@ export async function getForecastTrends(
     // For development, return mock data with a simulated delay
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(mockTrendsData);
+        // return combined data if type is "all"
+        if(type === "all") {
+          resolve(mockCombinedTrendsData)
+        } else {
+          resolve(mockTrendsData);
+        }
       }, 700);
     });
   } catch (error) {

@@ -20,7 +20,7 @@ import {
   Legend
 } from "recharts";
 
-type ChartType = "temperature" | "humidity" | "precipitation";
+type ChartType = "drought" | "flood" | "all";
 
 export default function ForecastPage() {
   const {
@@ -32,7 +32,7 @@ export default function ForecastPage() {
 
   const temperatureUnit = useUserStore((state) => state.preferences.temperatureUnit);
 
-  const [chartType, setChartType] = useState<ChartType>("temperature");
+  const [chartType, setChartType] = useState<ChartType>("drought");
 
   // Change the chart type and fetch new trends data
   const handleChartTypeChange = (type: ChartType) => {
@@ -45,10 +45,10 @@ export default function ForecastPage() {
     const numValue = typeof value === 'string' ? Number.parseFloat(value) : value;
 
     switch (chartType) {
-      case "temperature":
-        return `${numValue}°${temperatureUnit === "celsius" ? "C" : "F"}`;
-      case "humidity":
-      case "precipitation":
+      case "drought":
+        return `${numValue}%`;
+      case "flood":
+      case "all":
         return `${numValue}%`;
       default:
         return String(numValue);
@@ -58,10 +58,10 @@ export default function ForecastPage() {
   // Format tooltip values based on chart type
   const formatTooltipValue = (value: number): string => {
     switch (chartType) {
-      case "temperature":
-        return `${value}°${temperatureUnit === "celsius" ? "C" : "F"}`;
-      case "humidity":
-      case "precipitation":
+      case "drought":
+        return `${value}%`;
+      case "flood":
+      case "all":
         return `${value}%`;
       default:
         return String(value);
@@ -71,28 +71,28 @@ export default function ForecastPage() {
   // Get color for the chart based on type
   const getChartColor = () => {
     switch (chartType) {
-      case "temperature":
+      case "drought":
         return "#FF6B6B"; // Red for temperature
-      case "humidity":
+      case "flood":
         return "#4ECDC4"; // Teal for humidity
-      case "precipitation":
-        return "#1A85FF"; // Blue for precipitation
-      default:
+      case "all":
         return "#8884d8"; // Default purple
+      default:
+        return "#1A85FF"; // Blue for precipitation
     }
   };
 
   // Get chart title based on type
   const getChartTitle = () => {
     switch (chartType) {
-      case "temperature":
-        return "Temperature Forecast";
-      case "humidity":
-        return "Humidity Forecast";
-      case "precipitation":
-        return "Precipitation Forecast";
+      case "drought":
+        return "Drought Forecast";
+      case "flood":
+        return "Flood Forecast";
+      case "all":
+        return "Combined Forecast";
       default:
-        return "Weather Forecast";
+        return "Drought Forecast";
     }
   };
 
@@ -102,7 +102,7 @@ export default function ForecastPage() {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Weekly Forecast</h1>
-          <p className="text-muted-foreground">7-day weather predictions and trends</p>
+          <p className="text-muted-foreground">7-day disaster predictions and trends</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -126,28 +126,28 @@ export default function ForecastPage() {
             </div>
             <div className="flex items-center gap-2 mt-4 sm:mt-0">
               <Button
-                variant={chartType === "temperature" ? "default" : "outline"}
+                variant={chartType === "drought" ? "default" : "outline"}
                 size="sm"
-                onClick={() => handleChartTypeChange("temperature")}
+                onClick={() => handleChartTypeChange("drought")}
               >
                 <WeatherDataIcons.Temperature className="mr-2 h-4 w-4" />
-                Temperature
+                Drought
               </Button>
               <Button
-                variant={chartType === "humidity" ? "default" : "outline"}
+                variant={chartType === "flood" ? "default" : "outline"}
                 size="sm"
-                onClick={() => handleChartTypeChange("humidity")}
+                onClick={() => handleChartTypeChange("flood")}
               >
                 <WeatherDataIcons.Humidity className="mr-2 h-4 w-4" />
-                Humidity
+                Flood
               </Button>
               <Button
-                variant={chartType === "precipitation" ? "default" : "outline"}
+                variant={chartType === "all" ? "default" : "outline"}
                 size="sm"
-                onClick={() => handleChartTypeChange("precipitation")}
+                onClick={() => handleChartTypeChange("all")}
               >
-                <WeatherDataIcons.Wind className="mr-2 h-4 w-4" />
-                Precipitation
+                <WeatherDataIcons.Chart className="mr-2 h-4 w-4" />
+                All
               </Button>
             </div>
           </div>
@@ -158,8 +158,8 @@ export default function ForecastPage() {
           ) : (
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                {chartType === "precipitation" ? (
-                  <BarChart
+                {chartType === "all" ? (
+                  <LineChart
                     data={trendsData}
                     margin={{
                       top: 20,
@@ -174,19 +174,30 @@ export default function ForecastPage() {
                       tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
                     />
                     <YAxis
-                      tickFormatter={formatYAxisTick}
+                      tickFormatter={(value) => `${value}%`}
                     />
                     <Tooltip
-                      formatter={(value: number) => [formatTooltipValue(value), chartType.charAt(0).toUpperCase() + chartType.slice(1)]}
+                      formatter={(value: number, name: string) => [`${value}%`, name === 'drought' ? 'Drought' : 'Flood']}
                       labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
                     />
-                    <Bar
-                      dataKey="value"
-                      fill={getChartColor()}
-                      name={chartType.charAt(0).toUpperCase() + chartType.slice(1)}
+                    <Line
+                      type="monotone"
+                      dataKey="drought"
+                      stroke="#FF6B6B"
+                      activeDot={{ r: 8 }}
+                      strokeWidth={2}
+                      name="Drought"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="flood"
+                      stroke="#4ECDC4"
+                      activeDot={{ r: 8 }}
+                      strokeWidth={2}
+                      name="Flood"
                     />
                     <Legend />
-                  </BarChart>
+                  </LineChart>
                 ) : (
                   <LineChart
                     data={trendsData}
@@ -230,7 +241,7 @@ export default function ForecastPage() {
       <Card>
         <CardHeader>
           <CardTitle>7-Day Forecast</CardTitle>
-          <CardDescription>Detailed daily weather information</CardDescription>
+          <CardDescription>Detailed disaster information</CardDescription>
         </CardHeader>
         <CardContent>
           {forecastLoading || !weeklyForecast ? (
