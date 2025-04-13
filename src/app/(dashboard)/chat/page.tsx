@@ -59,8 +59,8 @@ export default function ChatPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Weather Assistant</h1>
-          <p className="text-muted-foreground">Ask questions about weather and forecasts</p>
+          <h1 className="text-2xl font-bold tracking-tight">RADA Intelligent Assistant</h1>
+          <p className="text-muted-foreground">Ask anything about droughts and floods in Baringo</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -77,9 +77,9 @@ export default function ChatPage() {
       {/* Chat Interface */}
       <Card className="flex flex-col h-[600px]">
         <CardHeader className="pb-3">
-          <CardTitle>Weather Assistant</CardTitle>
+          <CardTitle>RADA Intelligent Assistant</CardTitle>
           <CardDescription>
-            Ask me about weather forecasts, alerts, or conditions
+            Ask me about weather forecasts, alerts, or disaster conditions
           </CardDescription>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col overflow-hidden">
@@ -92,36 +92,37 @@ export default function ChatPage() {
                     How can I help you today?
                   </h3>
                   <p className="text-sm mb-6">
-                    Ask me questions about the weather forecast, alerts, or weather conditions.
+                    Ask me questions about the disaster forecast, alerts or disaster conditions in Baringo, KE.
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <Button
                       variant="outline"
                       className="justify-start"
-                      onClick={() => sendMessage("What's the weather like today?")}
+                      onClick={() => sendMessage("What are risks associated with floods?")}
                     >
-                      What's the weather like today?
+                      Flash floods risks
                     </Button>
                     <Button
                       variant="outline"
                       className="justify-start"
-                      onClick={() => sendMessage("Will it rain this week?")}
+                      onClick={() => sendMessage("How can I prepare for upcoming dry spells")}
                     >
-                      Will it rain this week?
+                      Prepare for droughts
                     </Button>
                     <Button
                       variant="outline"
                       className="justify-start"
-                      onClick={() => sendMessage("What's the temperature forecast?")}
+                      onClick={() => sendMessage("What insights can we gain from the current disaster forecast?")}
                     >
-                      What's the temperature forecast?
+                      Forecasts insights
                     </Button>
                     <Button
                       variant="outline"
                       className="justify-start"
-                      onClick={() => sendMessage("Are there any weather alerts?")}
+                      onClick={() => sendMessage("Are there any disaster alerts?")}
                     >
-                      Are there any weather alerts?
+                      Any disaster alerts?
                     </Button>
                   </div>
                 </div>
