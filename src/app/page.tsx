@@ -68,8 +68,8 @@ export default function DashboardPage() {
       <div className="grid md:mx-6 sm:mx-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Today's Forecast</CardTitle>
-            <CardDescription>Current conditions and outlook</CardDescription>
+            <CardTitle>Today's Baringo Disaster Forecast</CardTitle>
+            <CardDescription>Current disaster conditions and outlook</CardDescription>
           </CardHeader>
           <CardContent>
             {forecastLoading || !todayForecast ? (
@@ -125,8 +125,8 @@ export default function DashboardPage() {
       <div className="md:mx-6 sm:mx-2">
         <Card>
           <CardHeader>
-            <CardTitle>Temperature Trend</CardTitle>
-            <CardDescription>7-day temperature forecast</CardDescription>
+            <CardTitle>Disaster Trend</CardTitle>
+            <CardDescription>7-day disaster forecast</CardDescription>
           </CardHeader>
           <CardContent>
             {forecastLoading || !trendsData.length ? (
@@ -148,17 +148,28 @@ export default function DashboardPage() {
                       dataKey="date"
                       tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
                     />
-                    <YAxis />
+                    <YAxis
+                      tickFormatter={(value) => `${value}%`}
+                    />
                     <Tooltip
-                      formatter={(value) => [`${value}°C`, "Temperature"]}
+                      formatter={(value: number, name: string) => [`${value}%`, name === 'drought' ? 'Drought' : 'Flood']}
                       labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
                     />
                     <Line
                       type="monotone"
-                      dataKey="value"
-                      stroke="#8884d8"
+                      dataKey="drought"
+                      stroke="#FF6B6B"
                       activeDot={{ r: 8 }}
-                      strokeWidth={1.5}
+                      strokeWidth={1}
+                      name="Drought"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="flood"
+                      stroke="#4ECDC4"
+                      activeDot={{ r: 8 }}
+                      strokeWidth={1}
+                      name="Flood"
                     />
                   </LineChart>
                 </ResponsiveContainer>
