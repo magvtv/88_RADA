@@ -66,7 +66,7 @@ export default function AlertsPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Weather Alerts</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Disaster Alerts</h1>
           <p className="text-muted-foreground">
             {unreadCount
               ? `You have ${unreadCount} unread alert${unreadCount > 1 ? "s" : ""}`
@@ -98,7 +98,7 @@ export default function AlertsPage() {
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>
-              {showUnreadOnly ? "Unread Alerts" : "All Weather Alerts"}
+              {showUnreadOnly ? "Unread Alerts" : "All Disaster Alerts"}
             </CardTitle>
             <CardDescription>
               {showUnreadOnly
@@ -146,7 +146,7 @@ export default function AlertsPage() {
         {/* Alert Detail */}
         <Card>
           <CardHeader>
-            <CardTitle>Alert Details</CardTitle>
+            <CardTitle>Disaster Alert Details</CardTitle>
             <CardDescription>
               {selectedAlert
                 ? "Selected alert information"

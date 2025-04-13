@@ -70,7 +70,7 @@ export function AlertItem({ alert, onSelect }: AlertItemProps) {
       )}
       onClick={handleClick}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 my-2">
         <div className="mt-1">{getAlertIcon()}</div>
         <div className="flex-1">
           <div className="flex justify-between items-start">
