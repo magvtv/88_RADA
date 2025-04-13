@@ -1,6 +1,6 @@
 export type TemperatureUnit = 'celsius' | 'fahrenheit';
 export type ThemeType = 'light' | 'dark' | 'system';
-export type Language = 'en' | 'es' | 'fr' | 'de' | 'zh' | 'ja';
+export type Language = 'en' | 'sw' ;
 
 export interface UserPreferences {
   temperatureUnit: TemperatureUnit;

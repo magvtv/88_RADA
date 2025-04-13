@@ -10,36 +10,41 @@ const ENDPOINTS = {
 // Mock data for development
 const mockChatResponses: Record<string, NLPResponse> = {
   default: {
-    answer: "I don't have specific information about that. Would you like to know about the current weather forecast instead?",
+    answer: "I don't have specific information about that. Would you like to know about the current disaster forecast instead?",
     confidence: 0.5,
     relatedQuestions: [
-      "What's the weather like today?",
-      "Will it rain this week?",
-      "What's the temperature for tomorrow?"
+      "How can I prepare for upcoming flash floods?",
+      "What are some disaster actionable insights ",
+      "What are the current disaster forecasts?",
+      "Share signs of impending drought",
     ],
   },
-  weather: {
-    answer: "The weather today is sunny with a high of 25°C. There's a slight chance of rain in the evening.",
+  drought: {
+    answer: "Current dry spell conditions in Baringo: Marigat region experiencing severe drought with water sources depleting. Kabarnet area facing moderate dry conditions affecting crop yields. Eastern parts showing early signs of drought stress with reduced vegetation.",
     confidence: 0.9,
     forecasts: [
-      { date: "2025-04-11", summary: "Sunny, 25°C" },
-      { date: "2025-04-12", summary: "Partly Cloudy, 27°C" }
+      { date: "2025-04-11", summary: "Continued dry conditions, no precipitation expected" },
+      { date: "2025-04-12", summary: "Partly cloudy, minimal chance of rainfall" },
+      { date: "2025-04-13", summary: "Increasing wind patterns, dust advisories in effect" }
     ],
   },
-  rain: {
-    answer: "There is a 40% chance of rain on Sunday. The rest of the week looks mostly clear.",
+  flood: {
+    answer: "Current flood situation in Baringo: Lake Baringo has risen significantly, displacing communities along the shoreline. Marigat area experiencing flash floods due to heavy upstream rainfall. Kabarnet region reporting minor flooding in low-lying areas with several roads becoming impassable.",
     confidence: 0.85,
     forecasts: [
-      { date: "2025-04-13", summary: "Rainy, 22°C" },
+      { date: "2025-04-13", summary: "Heavy rainfall expected, flood warnings in effect" },
+      { date: "2025-04-14", summary: "Continued precipitation, risk of landslides in hilly areas" },
+      { date: "2025-04-15", summary: "Gradual reduction in rainfall, but waterlogged areas remain hazardous" }
     ],
   },
   hello: {
-    answer: "Hello! How can I help you with weather information today?",
+    answer: "Hello! How can I help you with learning about disasters today?",
     confidence: 0.95,
     relatedQuestions: [
-      "What's the weather forecast?",
-      "Will it rain today?",
-      "What's the temperature right now?"
+      "What are the current disaster forecasts for Baringo?",
+      "How can I prepare for potential floods in Baringo?",
+      "Are there any drought warnings for Marigat region?",
+      "What emergency resources are available in Kabarnet area?"
     ],
   },
 };
@@ -48,11 +53,11 @@ const mockChatResponses: Record<string, NLPResponse> = {
 function getMockResponse(query: string): NLPResponse {
   const lowerQuery = query.toLowerCase();
 
-  if (lowerQuery.includes("weather") || lowerQuery.includes("forecast") || lowerQuery.includes("temperature")) {
+  if (lowerQuery.includes("drought") || lowerQuery.includes("forecast") || lowerQuery.includes("dry spell")) {
     return mockChatResponses.weather;
   }
 
-  if (lowerQuery.includes("rain") || lowerQuery.includes("precipitation")) {
+  if (lowerQuery.includes("flood") || lowerQuery.includes("forecast") || lowerQuery.includes("rain")) {
     return mockChatResponses.rain;
   }
 

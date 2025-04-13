@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DailyForecast } from "@/types/forecast";
-import { useUserStore } from "@/store";
+// import { useUserStore } from "@/store";
 import { getWeatherIcon } from "@/components/ui/icons";
 
 interface ForecastCardProps {
@@ -11,12 +11,8 @@ interface ForecastCardProps {
 }
 
 export function ForecastCard({ forecast, isHighlighted = false }: ForecastCardProps) {
-  const temperatureUnit = useUserStore((state) => state.preferences.temperatureUnit);
-
-  // Convert temperature if needed
-  const temperature = temperatureUnit === "celsius"
-    ? forecast.weatherData.temperature
-    : (forecast.weatherData.temperature * 9) / 5 + 32;
+  // Average disaster probability of both drought and floods
+  const displayDisasterProbability = (forecast.weatherData.drought + forecast.weatherData.flood ) / 2;
 
   // Format date
   const date = new Date(forecast.date);
@@ -46,22 +42,21 @@ export function ForecastCard({ forecast, isHighlighted = false }: ForecastCardPr
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-2">
-          {/* Temperature */}
+          {/* Average Disaster Probability */}
           <div>
             <p className="text-2xl font-bold">
-              {Math.round(temperature)}°{temperatureUnit === "celsius" ? "C" : "F"}
+              {forecast.weatherData.drought}%
             </p>
             <p className="text-sm text-muted-foreground">{forecast.weatherData.condition}</p>
           </div>
 
-          {/* Weather details */}
-          <div className="text-sm space-y-1">
-            <p>Humidity: {forecast.weatherData.humidity}%</p>
+          {/* Disaster Probabilities details */}
+          <div className="text-sm flex  flex-col items-end justify-center">
             <p>
-              Wind: {forecast.weatherData.windSpeed} km/h {forecast.weatherData.windDirection}
+              Flood: {forecast.weatherData.flood}%
             </p>
-            {forecast.weatherData.precipitation > 0 && (
-              <p>Precipitation: {forecast.weatherData.precipitation}%</p>
+            {displayDisasterProbability > 25 && (
+              <p>Combined: {Math.round(displayDisasterProbability)}%</p>
             )}
           </div>
         </div>

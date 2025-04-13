@@ -13,13 +13,13 @@ const ENDPOINTS = {
 const mockAlerts: Alert[] = [
   {
     id: "1",
-    title: "Heavy Rain Warning",
-    description: "Heavy rainfall expected in your area on Sunday. Potential for localized flooding in low-lying areas.",
+    title: "Drought Onset Warning",
+    description: "Residents of Mogotio, Baringo, are advised to prepare for severe drought conditions. Prolonged dry spells have significantly reduced water availability and agricultural productivity",
     severity: "warning",
     timestamp: "2025-04-10T15:30:00Z",
     isRead: false,
     location: {
-      name: "Downtown",
+      name: "Mogotio",
       coordinates: {
         latitude: 40.7128,
         longitude: -74.006,
@@ -28,27 +28,48 @@ const mockAlerts: Alert[] = [
   },
   {
     id: "2",
-    title: "High Wind Advisory",
-    description: "Strong winds expected on Monday with gusts up to 45 mph. Secure outdoor items and be cautious when driving.",
+    title: "Short Flash Floods",
+    description: "Residents of Kabarnet, Baringo, are warned to be vigilant due to the possibility of short flash floods. Recent weather patterns indicate sudden rainfall that may lead to rapid water accumulation.",
     severity: "warning",
     timestamp: "2025-04-10T16:15:00Z",
     isRead: false,
+    location: {
+      name: "Kabarnet",
+      coordinates: {
+        latitude: 40.7128,
+        longitude: -74.006,
+      },
+    },
   },
   {
     id: "3",
-    title: "Temperature Drop",
-    description: "Rapid temperature drop expected tonight. Consider protecting sensitive plants.",
-    severity: "info",
-    timestamp: "2025-04-11T09:00:00Z",
-    isRead: false,
-  },
-  {
-    id: "4",
     title: "Thunderstorm Alert",
-    description: "Severe thunderstorms possible on Tuesday evening with risk of lightning and hail.",
+    description: "Residents of Marigat are advised to prepare for a harsh thunderstorm expected in the area. Severe weather conditions may lead to heavy rainfall, strong winds, and possible lightning strikes.",
     severity: "error",
     timestamp: "2025-04-09T12:45:00Z",
     isRead: true,
+    location: {
+      name: "Marigat",
+      coordinates: {
+        latitude: 40.7128,
+        longitude: -74.006,
+      },
+    },
+  },
+  {
+    id: "4",
+    title: "Possible Dry Spells",
+    description: "Residents of Eldama Ravine, Baringo, should be aware of the potential for short dry spells in the coming days. Weather forecasts indicate a temporary reduction in rainfall.",
+    severity: "info",
+    timestamp: "2025-04-11T09:00:00Z",
+    isRead: false,
+    location: {
+      name: "Eldama Ravine",
+      coordinates: {
+        latitude: 40.7128,
+        longitude: -74.006,
+      },
+    },
   },
   {
     id: "5",

@@ -26,7 +26,7 @@ const mockWeeklyForecast: WeeklyForecast = {
       weatherData: {
         drought: 46,
         flood: 21,
-        condition: "Sunny",
+        condition: "Mild drought | No flood",
       },
     },
     {
@@ -35,7 +35,7 @@ const mockWeeklyForecast: WeeklyForecast = {
       weatherData: {
         drought: 93,
         flood: 12,
-        condition: "Partly Cloudy",
+        condition: "Severe drought | No flood",
       },
     },
     {
@@ -44,7 +44,7 @@ const mockWeeklyForecast: WeeklyForecast = {
       weatherData: {
         drought: 34,
         flood: 67,
-        condition: "Rainy",
+        condition: "Mild drought | Moderate flood",
       },
     },
     {
@@ -53,7 +53,7 @@ const mockWeeklyForecast: WeeklyForecast = {
       weatherData: {
         drought: 88,
         flood: 39,
-        condition: "Stormy",
+        condition: "Severe Drought | Mild flood",
       },
     },
     {
@@ -62,7 +62,7 @@ const mockWeeklyForecast: WeeklyForecast = {
       weatherData: {
         drought: 72,
         flood: 28,
-        condition: "Cloudy",
+        condition: "Moderate drought | Mild flood",
       },
     },
     {
@@ -71,7 +71,7 @@ const mockWeeklyForecast: WeeklyForecast = {
       weatherData: {
         drought: 55,
         flood: 45,
-        condition: "Partly Cloudy",
+        condition: "Moderate drought | Mild flood",
       },
     },
     {
@@ -80,7 +80,7 @@ const mockWeeklyForecast: WeeklyForecast = {
       weatherData: {
         drought: 19,
         flood: 65,
-        condition: "Sunny",
+        condition: "No drought | Moderate flood",
       },
     },
   ],

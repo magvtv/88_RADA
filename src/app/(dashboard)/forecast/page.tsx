@@ -15,8 +15,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   Legend
 } from "recharts";
 
@@ -76,9 +74,7 @@ export default function ForecastPage() {
       case "flood":
         return "#4ECDC4"; // Teal for humidity
       case "all":
-        return "#8884d8"; // Default purple
-      default:
-        return "#1A85FF"; // Blue for precipitation
+        return "#8884d8"; // Default purple/ Blue for precipitation
     }
   };
 
@@ -91,8 +87,6 @@ export default function ForecastPage() {
         return "Flood Forecast";
       case "all":
         return "Combined Forecast";
-      default:
-        return "Drought Forecast";
     }
   };
 
@@ -124,7 +118,7 @@ export default function ForecastPage() {
               <CardTitle>{getChartTitle()}</CardTitle>
               <CardDescription>7-day forecast visualization</CardDescription>
             </div>
-            <div className="flex items-center gap-2 mt-4 sm:mt-0">
+            <div className="flex items-center gap-1 mt-4 sm:mt-0">
               <Button
                 variant={chartType === "drought" ? "default" : "outline"}
                 size="sm"
@@ -154,7 +148,7 @@ export default function ForecastPage() {
         </CardHeader>
         <CardContent>
           {forecastLoading || !trendsData.length ? (
-            <Skeleton className="h-[350px] w-full rounded-lg" />
+            <Skeleton className="h-[400px] w-full rounded-lg" />
           ) : (
             <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -245,17 +239,17 @@ export default function ForecastPage() {
         </CardHeader>
         <CardContent>
           {forecastLoading || !weeklyForecast ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Skeleton className="h-[200px] w-full rounded-lg" />
-              <Skeleton className="h-[200px] w-full rounded-lg" />
-              <Skeleton className="h-[200px] w-full rounded-lg" />
-              <Skeleton className="h-[200px] w-full rounded-lg" />
-              <Skeleton className="h-[200px] w-full rounded-lg" />
-              <Skeleton className="h-[200px] w-full rounded-lg" />
-              <Skeleton className="h-[200px] w-full rounded-lg" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Skeleton className="h-[350px] w-full rounded-lg" />
+              <Skeleton className="h-[350px] w-full rounded-lg" />
+              <Skeleton className="h-[350px] w-full rounded-lg" />
+              <Skeleton className="h-[350px] w-full rounded-lg" />
+              <Skeleton className="h-[350px] w-full rounded-lg" />
+              <Skeleton className="h-[350px] w-full rounded-lg" />
+              <Skeleton className="h-[350px] w-full rounded-lg" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {weeklyForecast.forecasts.map((forecast) => (
                 <ForecastCard
                   key={forecast.date}

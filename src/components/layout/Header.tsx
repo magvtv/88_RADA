@@ -31,9 +31,7 @@ export function Header() {
 
   const languages = [
     { code: "en" as const, label: "English" },
-    { code: "es" as const, label: "Español" },
-    { code: "fr" as const, label: "Français" },
-    { code: "de" as const, label: "Deutsch" },
+    { code: "sw" as const, label: "Swahili" },
   ];
 
   const handleTemperatureUnitToggle = () => {
@@ -45,7 +43,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
-      <div className="container flex h-16 items-center justify-between py-4">
+      <div className="container flex h-16 items-center justify-between py-2">
         <div className="flex items-center gap-2 md:gap-4">
           {/* Mobile Menu Trigger */}
           <Sheet>

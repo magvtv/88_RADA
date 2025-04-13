@@ -59,8 +59,8 @@ export default function ChatPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">RADA Intelligent Assistant</h1>
-          <p className="text-muted-foreground">Ask anything about droughts and floods in Baringo</p>
+          <h1 className="text-2xl font-bold tracking-tight">Baringo Intelligent Assistant</h1>
+          <p className="text-muted-foreground">Ask anything about droughts and floods in Baringo, Kenya</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -77,9 +77,9 @@ export default function ChatPage() {
       {/* Chat Interface */}
       <Card className="flex flex-col h-[600px]">
         <CardHeader className="pb-3">
-          <CardTitle>RADA Intelligent Assistant</CardTitle>
+          <CardTitle>Baringo Intelligent Assistant</CardTitle>
           <CardDescription>
-            Ask me about weather forecasts, alerts, or disaster conditions
+            Get summaries on early warnings for disaster forecast or alerts
           </CardDescription>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col overflow-hidden">
