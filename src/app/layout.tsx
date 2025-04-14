@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "RADA Weather Dashboard",
-  description: "Advanced weather forecasting and radar data visualization",
+  title: "RADA",
+  description: "Resilient Action for Disaster Awareness",
   icons: {
     icon: "/favicon.ico",
   },

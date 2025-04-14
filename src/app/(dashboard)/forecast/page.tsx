@@ -28,8 +28,6 @@ export default function ForecastPage() {
     fetchForecastTrends
   } = useForecastStore();
 
-  const temperatureUnit = useUserStore((state) => state.preferences.temperatureUnit);
-
   const [chartType, setChartType] = useState<ChartType>("drought");
 
   // Change the chart type and fetch new trends data

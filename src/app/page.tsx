@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,10 @@ import { useForecastStore, useAlertStore } from "@/store";
 import { ForecastCard } from "@/components/forecast/ForecastCard";
 import { AlertItem } from "@/components/alerts/AlertItem";
 import { WeatherDataIcons, NavIcons, ActionIcons } from "@/components/ui/icons";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Tooltip, ResponsiveContainer } from "recharts";
 import { AppLayout } from "@/components/layout/AppLayout";
+
+type ChartType = "drought" | "flood" | "all";
 
 export default function DashboardPage() {
   const {
@@ -45,6 +47,55 @@ export default function DashboardPage() {
     month: "long",
     day: "numeric",
   });
+
+  const [chartType, setChartType] = useState<ChartType>("drought");
+
+  // Format the chart Y-axis based on chart type - make sure it returns a string
+  const formatYAxisTick = (value: number | string, index: number): string => {
+    const numValue = typeof value === 'string' ? Number.parseFloat(value) : value;
+
+    switch (chartType) {
+      case "drought":
+        return `${numValue}%`;
+      case "flood":
+      case "all":
+        return `${numValue}%`;
+      default:
+        return String(numValue);
+    }
+  };
+
+   // Get color for the chart based on type
+  const getChartColor = () => {
+    switch (chartType) {
+      case "drought":
+        return "#FF6B6B"; // Red for temperature
+      case "flood":
+        return "#4ECDC4"; // Teal for humidity
+      case "all":
+        return "#8884d8"; // Default purple/ Blue for precipitation
+    }
+  };
+
+  // Change the chart type and fetch new trends data
+  const handleChartTypeChange = (type: ChartType) => {
+    setChartType(type);
+    fetchForecastTrends(type);
+  };
+
+   // Format tooltip values based on chart type
+   const formatTooltipValue = (value: number): string => {
+    switch (chartType) {
+      case "drought":
+        return `${value}%`;
+      case "flood":
+      case "all":
+        return `${value}%`;
+      default:
+        return String(value);
+    }
+  };
+
 
   return (
     <AppLayout>
@@ -138,48 +189,83 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {forecastLoading || !trendsData.length ? (
-                <Skeleton className="h-[350px] w-full rounded-lg" />
+                <Skeleton className="h-[400px] w-full rounded-lg" />
               ) : (
                 <div className="h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                        data={trendsData}
-                        margin={{
-                        top: 20,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
-                      />
-                      <YAxis
-                        tickFormatter={(value) => `${value}%`}
-                      />
-                      <Tooltip
-                        formatter={(value: number, name: string) => [`${value}%`, name === 'drought' ? 'Drought' : 'Flood']}
-                        labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="drought"
-                        stroke="#FF6B6B"
-                        activeDot={{ r: 8 }}
-                        strokeWidth={1}
-                        name="Drought"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="flood"
-                        stroke="#4ECDC4"
-                        activeDot={{ r: 8 }}
-                        strokeWidth={1}
-                        name="Flood"
-                      />
-                    </LineChart>
+                  {chartType === "all" ? (
+                  <LineChart
+                    data={trendsData}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 40,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
+                    />
+                    <YAxis
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <Tooltip
+                      formatter={(value: number, name: string) => [`${value}%`, name === 'drought' ? 'Drought' : 'Flood']}
+                      labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="drought"
+                      stroke="#FF6B6B"
+                      activeDot={{ r: 8 }}
+                      strokeWidth={1}
+                      name="Drought"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="flood"
+                      stroke="#4ECDC4"
+                      activeDot={{ r: 8 }}
+                      strokeWidth={1}
+                      name="Flood"
+                    />
+                    <Legend />
+                  </LineChart>
+                ) : (
+                  <LineChart
+                    data={trendsData}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 40,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'short' })}
+                    />
+                    <YAxis
+                      tickFormatter={formatYAxisTick}
+                    />
+                    <Tooltip
+                      formatter={(value: number) => [formatTooltipValue(value), chartType.charAt(0).toUpperCase() + chartType.slice(1)]}
+                      labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke={getChartColor()}
+                      activeDot={{ r: 8 }}
+                      strokeWidth={2}
+                      name={chartType.charAt(0).toUpperCase() + chartType.slice(1)}
+                    />
+                    <Legend />
+                  </LineChart>
+                )}
                   </ResponsiveContainer>
                 </div>
               )}
