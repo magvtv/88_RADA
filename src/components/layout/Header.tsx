@@ -78,7 +78,7 @@ export function Header() {
           className={`${
             isSearchOpen ? "flex" : "hidden md:flex"
           } absolute left-0 top-16 md:static md:w-1/3 w-full px-4 py-4 md:p-0} ${
-            isSearchOpen ? "md:bg-background/100 backdrop-blur-lg" : ""
+            isSearchOpen ? "bg-background/80 backdrop-blur-sm" : ""
           }`}
         >
           <div className="relative w-full">
