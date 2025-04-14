@@ -34,12 +34,7 @@ export function Header() {
     { code: "sw" as const, label: "Swahili" },
   ];
 
-  const handleTemperatureUnitToggle = () => {
-    const newUnit = userPreferences.temperatureUnit === "celsius"
-      ? "fahrenheit"
-      : "celsius";
-    setTemperatureUnit(newUnit);
-  };
+
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
@@ -82,12 +77,14 @@ export function Header() {
         <div
           className={`${
             isSearchOpen ? "flex" : "hidden md:flex"
-          } absolute left-0 top-16 md:static md:w-1/3 w-full px-4 py-2 md:p-0`}
+          } absolute left-0 top-16 md:static md:w-1/3 w-full px-4 py-4 md:p-0} ${
+            isSearchOpen ? "md:bg-background/100 backdrop-blur-lg" : ""
+          }`}
         >
           <div className="relative w-full">
             <Input
               type="search"
-              placeholder="Search forecasts, locations..."
+              placeholder="Search region levels in Baringo..."
               className="w-full pr-8"
             />
             <Button
@@ -122,16 +119,6 @@ export function Header() {
             </span>
           </Button>
 
-          {/* Unit Toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleTemperatureUnitToggle}
-            className="hidden md:flex"
-          >
-            {userPreferences.temperatureUnit === "celsius" ? "°C" : "°F"}
-          </Button>
-
           {/* User Profile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -142,20 +129,26 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                My Account
+                </DropdownMenuLabel>
               <DropdownMenuSeparator />
 
               {/* Theme Toggle */}
               <DropdownMenuItem onClick={() => setTheme("light")}>
                 <UIIcons.Sun className="mr-2 h-4 w-4" />
-                <span>Light</span>
+                <span>
+                  Light
+                  </span>
                 {theme === "light" && (
                   <UIIcons.Check className="ml-auto h-4 w-4" />
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme("dark")}>
                 <UIIcons.Moon className="mr-2 h-4 w-4" />
-                <span>Dark</span>
+                <span>
+                  Dark
+                </span>
                 {theme === "dark" && (
                   <UIIcons.Check className="ml-auto h-4 w-4" />
                 )}
@@ -170,17 +163,6 @@ export function Header() {
 
               <DropdownMenuSeparator />
 
-              {/* Temperature Unit (Mobile) */}
-              <DropdownMenuItem
-                onClick={handleTemperatureUnitToggle}
-                className="md:hidden"
-              >
-                <span>
-                  {userPreferences.temperatureUnit === "celsius"
-                    ? "°C Celsius"
-                    : "°F Fahrenheit"}
-                </span>
-              </DropdownMenuItem>
 
               {/* Language Menu */}
               {languages.map((lang) => (
