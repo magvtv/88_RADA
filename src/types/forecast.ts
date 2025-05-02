@@ -1,8 +1,8 @@
 import { useAlertStore } from '../store/alertStore';
 export interface WeatherData {
-  drought: number;
-  flood: number;
-  condition: string; // e.g., 'Sunny', 'Rainy', 'Cloudy'
+  drought_probability: number;
+  flood_probability: number;
+  condition: string;
 }
 
 export interface DailyForecast {

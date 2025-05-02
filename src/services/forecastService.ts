@@ -18,92 +18,93 @@ const ENDPOINTS = {
 const mockWeeklyForecast: WeeklyForecast = {
   forecasts: [
     {
-      date: "2025-04-21",
-      day: "Monday",
-      weatherData: {
-        drought: 63.91,
-        flood: 54.77,
-        condition: getCondition(63.91, 54.77),
-      },
-      created_at: "April 21, 2025 12:30",
-      updated_at: "April 21, 2025 13:30"
-    },
-    {
-      date: "2025-04-22",
-      day: "Tuesday",
-      weatherData: {
-        drought: 53.11,
-        flood: 68.32,
-        condition: getCondition(53.11, 68.32),
-      },
-      created_at: "April 21, 2025 12:30",
-      updated_at: "April 21, 2025 13:30"
-    },
-    {
-      date: "2025-04-23",
-      day: "Wednesday",
-      weatherData: {
-        drought: 47.45,
-        flood: 73.13,
-        condition: getCondition(47.45, 73.13),
-      },
-      created_at: "April 21, 2025 12:30",
-      updated_at: "April 21, 2025 13:30"
-    },
-    {
-      date: "2025-04-24",
-      day: "Thursday",
-      weatherData: {
-        drought: 43.35,
-        flood: 73.36,
-        condition: getCondition(43.35, 73.36),
-      },
-      created_at: "April 21, 2025 12:30",
-      updated_at: "April 21, 2025 13:30"
-    },
-    {
-      date: "2025-04-25",
+      date: "2025-05-02",
       day: "Friday",
       weatherData: {
-        drought: 38.09,
-        flood: 73.40,
-        condition: getCondition(38.09, 73.40),
+        flood_probability: 48.46,
+        drought_probability: 91.19,
+        condition: getCondition(48.46, 91.19)
       },
-      created_at: "April 21, 2025 12:30",
-      updated_at: "April 21, 2025 13:30"
+      created_at: "May 01, 2025 21:00",
+      updated_at: "May 02, 2025 05:06"
     },
     {
-      date: "2025-04-26",
+      date: "2025-05-03",
       day: "Saturday",
       weatherData: {
-        drought: 34.41,
-        flood: 74.16,
-        condition: getCondition(34.41, 74.16),
+        flood_probability: 64.24,
+        drought_probability: 56.94,
+        condition: getCondition(64.24, 56.94)
       },
-      created_at: "April 21, 2025 12:30",
-      updated_at: "April 21, 2025 13:30"
+      created_at: "May 01, 2025 21:00",
+      updated_at: "May 02, 2025 05:06"
     },
     {
-      date: "2025-04-27",
+      date: "2025-05-04",
       day: "Sunday",
       weatherData: {
-        drought: 32.97,
-        flood: 74.40,
-        condition: getCondition(32.97, 74.40),
+        flood_probability: 71.11,
+        drought_probability: 50.41,
+        condition: getCondition(71.11, 50.41)
       },
-      created_at: "April 21, 2025 12:30",
-      updated_at: "April 21, 2025 13:30"
+      created_at: "May 01, 2025 21:00",
+      updated_at: "May 02, 2025 05:06"
+    },
+    {
+      date: "2025-05-05",
+      day: "Monday",
+      weatherData: {
+        flood_probability: 72.41,
+        drought_probability: 45.4,
+        condition: getCondition(72.41, 45.4)
+      },
+      created_at: "May 01, 2025 21:00",
+      updated_at: "May 02, 2025 05:06"
+    },
+    {
+      date: "2025-05-06",
+      day: "Tuesday",
+      weatherData: {
+        flood_probability: 72.69,
+        drought_probability: 39.03,
+        condition: getCondition(72.69, 39.03)
+      },
+      created_at: "May 01, 2025 21:00",
+      updated_at: "May 02, 2025 05:06"
+    },
+    {
+      date: "2025-05-07",
+      day: "Wednesday",
+      weatherData: {
+        flood_probability: 73.78,
+        drought_probability: 34.7,
+        condition: getCondition(73.78, 34.7)
+      },
+      created_at: "May 01, 2025 21:00",
+      updated_at: "May 02, 2025 05:06"
+    },
+    {
+      date: "2025-05-08",
+      day: "Thursday",
+      weatherData: {
+        flood_probability: 74.05,
+        drought_probability: 33.15,
+        condition: getCondition(74.05, 33.15)
+      },
+      created_at: "May 01, 2025 21:00",
+      updated_at: "May 02, 2025 05:06"
     }
   ],
-  lastUpdated: "April 21, 2025 13:30"
-
+  lastUpdated: "May 1, 2025 21:00"
 };
 
-
 // helper function to determine condition based on probabilities
-function getCondition(drought: number, flood: number): string {
-  const droughtLevel = drought > 70 ? "Severe" : drought > 50 ? "Moderate" : drought > 30 ? "Mild" : "No";
-  const floodLevel = flood > 70 ? "Severe" : flood > 50 ? "Moderate" : flood > 30 ? "Mild" : "No";
+function getCondition(droughtProb: number, floodProb: number): string {
+  if(!droughtProb || !floodProb) {
+    throw new Error('Both drought and flood probabilities are required');
+  }
+  const droughtLevel = droughtProb > 70 ? "Severe" : droughtProb > 50 ? "Moderate" : droughtProb > 30 ? "Mild" : "No";
+  const floodLevel = floodProb > 70 ? "Severe" : floodProb > 50 ? "Moderate" : floodProb > 30 ? "Mild" : "No";
   return `${droughtLevel} drought | ${floodLevel} flood`;
 
 }
@@ -112,28 +113,28 @@ function getCondition(drought: number, flood: number): string {
 // update trends data to match new probabilities
 const mockTrendsData: ForecastChartData[] = mockWeeklyForecast.forecasts.map(forecast => ({
   date: forecast.date,
-  value: forecast.weatherData.drought,
+  value: forecast.weatherData.drought_probability,
   type: "drought",
 }));
 
 // mock data for combine trends
 const mockCombinedTrendsData: CombinedForecastChartData[] = mockWeeklyForecast.forecasts.map(forecast => ({
   date: forecast.date,
-  drought: forecast.weatherData.drought,
-  flood: forecast.weatherData.flood
+  drought: forecast.weatherData.drought_probability,
+  flood: forecast.weatherData.flood_probability
 }));
 
 
 // helper function to transform API response to match our interface
-function transformAPIResponse(apiData: any[]): WeeklyForecast {
+function transformAPIResponse(apiData: DailyForecast[]): WeeklyForecast {
   return {
     forecasts: apiData.map(item => ({
       date: item.date,
       day: item.day,
       weatherData: {
-        drought: item.weatherData.drought,
-        flood: item.weatherData.flood,
-        condition: getCondition(item.weatherData.drought, item.weatherData.flood),
+        drought_probability: item.weatherData.drought_probability,
+        flood_probability: item.weatherData.flood_probability,
+        condition: getCondition(item.weatherData.drought_probability, item.weatherData.flood_probability),
       },
       created_at: item.created_at,
       updated_at: item.updated_at
