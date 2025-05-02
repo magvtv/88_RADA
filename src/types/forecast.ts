@@ -1,3 +1,4 @@
+import { useAlertStore } from '../store/alertStore';
 export interface WeatherData {
   drought: number;
   flood: number;
@@ -8,6 +9,8 @@ export interface DailyForecast {
   date: string;
   day: string;
   weatherData: WeatherData;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface WeeklyForecast {
@@ -21,13 +24,13 @@ export interface ForecastChartData {
   type: string; // e.g., 'temperature', 'humidity', 'precipitation'
 }
 
-export interface LocationData {
-  name: string;
-  coordinates: {
-    latitude: number;
-    longitude: number;
-  };
-}
+// export interface LocationData {
+//   name: string;
+//   coordinates: {
+//     latitude: number;
+//     longitude: number;
+//   };
+// }
 
 export interface CombinedForecastChartData {
   date: string;

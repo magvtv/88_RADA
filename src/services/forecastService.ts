@@ -4,15 +4,12 @@ import {
   type WeeklyForecast,
   type DailyForecast,
   type ForecastChartData,
-  LocationData,
   CombinedForecastChartData
 } from "@/types/forecast";
 
 const ENDPOINTS = {
   weeklyForecast: "/forecasts/weekly",
   todayForecast: "/forecasts/today",
-  locationForecast: (latitude: number, longitude: number) =>
-    `/forecasts/location?lat=${latitude}&lon=${longitude}`,
   forecastTrends: (type: string, days: number) =>
     `/forecasts/trends?type=${type}&days=${days}`,
 };
@@ -21,92 +18,111 @@ const ENDPOINTS = {
 const mockWeeklyForecast: WeeklyForecast = {
   forecasts: [
     {
-      date: "2025-04-11",
-      day: "Friday",
-      weatherData: {
-        drought: 46,
-        flood: 21,
-        condition: "Mild drought | No flood",
-      },
-    },
-    {
-      date: "2025-04-12",
-      day: "Saturday",
-      weatherData: {
-        drought: 93,
-        flood: 12,
-        condition: "Severe drought | No flood",
-      },
-    },
-    {
-      date: "2025-04-13",
-      day: "Sunday",
-      weatherData: {
-        drought: 34,
-        flood: 67,
-        condition: "Mild drought | Moderate flood",
-      },
-    },
-    {
-      date: "2025-04-14",
+      date: "2025-04-21",
       day: "Monday",
       weatherData: {
-        drought: 88,
-        flood: 39,
-        condition: "Severe Drought | Mild flood",
+        drought: 63.91,
+        flood: 54.77,
+        condition: getCondition(63.91, 54.77),
       },
+      created_at: "April 21, 2025 12:30",
+      updated_at: "April 21, 2025 13:30"
     },
     {
-      date: "2025-04-15",
+      date: "2025-04-22",
       day: "Tuesday",
       weatherData: {
-        drought: 72,
-        flood: 28,
-        condition: "Moderate drought | Mild flood",
+        drought: 53.11,
+        flood: 68.32,
+        condition: getCondition(53.11, 68.32),
       },
+      created_at: "April 21, 2025 12:30",
+      updated_at: "April 21, 2025 13:30"
     },
     {
-      date: "2025-04-16",
+      date: "2025-04-23",
       day: "Wednesday",
       weatherData: {
-        drought: 55,
-        flood: 45,
-        condition: "Moderate drought | Mild flood",
+        drought: 47.45,
+        flood: 73.13,
+        condition: getCondition(47.45, 73.13),
       },
+      created_at: "April 21, 2025 12:30",
+      updated_at: "April 21, 2025 13:30"
     },
     {
-      date: "2025-04-17",
+      date: "2025-04-24",
       day: "Thursday",
       weatherData: {
-        drought: 19,
-        flood: 65,
-        condition: "No drought | Moderate flood",
+        drought: 43.35,
+        flood: 73.36,
+        condition: getCondition(43.35, 73.36),
       },
+      created_at: "April 21, 2025 12:30",
+      updated_at: "April 21, 2025 13:30"
     },
+    {
+      date: "2025-04-25",
+      day: "Friday",
+      weatherData: {
+        drought: 38.09,
+        flood: 73.40,
+        condition: getCondition(38.09, 73.40),
+      },
+      created_at: "April 21, 2025 12:30",
+      updated_at: "April 21, 2025 13:30"
+    },
+    {
+      date: "2025-04-26",
+      day: "Saturday",
+      weatherData: {
+        drought: 34.41,
+        flood: 74.16,
+        condition: getCondition(34.41, 74.16),
+      },
+      created_at: "April 21, 2025 12:30",
+      updated_at: "April 21, 2025 13:30"
+    },
+    {
+      date: "2025-04-27",
+      day: "Sunday",
+      weatherData: {
+        drought: 32.97,
+        flood: 74.40,
+        condition: getCondition(32.97, 74.40),
+      },
+      created_at: "April 21, 2025 12:30",
+      updated_at: "April 21, 2025 13:30"
+    }
   ],
-  lastUpdated: "2025-04-11T09:30:00Z",
+  lastUpdated: "April 21, 2025 13:30"
+
 };
 
-const mockTrendsData: ForecastChartData[] = [
-  { date: "2025-04-11", value: 46, type: "drought" },
-  { date: "2025-04-12", value: 93, type: "drought" },
-  { date: "2025-04-13", value: 34, type: "drought" },
-  { date: "2025-04-14", value: 88, type: "drought" },
-  { date: "2025-04-15", value: 72, type: "drought" },
-  { date: "2025-04-16", value: 55, type: "drought" },
-  { date: "2025-04-17", value: 19, type: "drought" },
-];
 
-// mock data for combined forecast
-const mockCombinedTrendsData: CombinedForecastChartData[] = [
-  { date: "2025-04-11", drought: 46, flood: 21 },
-  { date: "2025-04-12", drought: 93, flood: 12 },
-  { date: "2025-04-13", drought: 34, flood: 67 },
-  { date: "2025-04-14", drought: 88, flood: 39 },
-  { date: "2025-04-15", drought: 72, flood: 28 },
-  { date: "2025-04-16", drought: 55, flood: 45 },
-  { date: "2025-04-17", drought: 19, flood: 65 },
-];
+// helper function to determine condition based on probabilities
+function getCondition(drought: number, flood: number): string {
+  const droughtLevel = drought > 70 ? "Severe" : drought > 50 ? "Moderate" : drought > 30 ? "Mild" : "No";
+  const floodLevel = flood > 70 ? "Severe" : flood > 50 ? "Moderate" : flood > 30 ? "Mild" : "No";
+  return `${droughtLevel} drought | ${floodLevel} flood`;
+
+}
+
+
+// update trends data to match new probabilities
+const mockTrendsData: ForecastChartData[] = mockWeeklyForecast.forecasts.map(forecast => ({
+  date: forecast.date,
+  value: forecast.weatherData.drought,
+  type: "drought",
+}));
+
+// mock data for combine trends
+const mockCombinedTrendsData: CombinedForecastChartData[] = mockWeeklyForecast.forecasts.map(forecast => ({
+  date: forecast.date,
+  drought: forecast.weatherData.drought,
+  flood: forecast.weatherData.flood
+}));
+
 
 // Service functions
 export async function getWeeklyForecast(): Promise<WeeklyForecast> {
