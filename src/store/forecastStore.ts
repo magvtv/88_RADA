@@ -8,7 +8,6 @@ import type {
 import {
   getWeeklyForecast,
   getTodayForecast,
-  getForecastByLocation,
   getForecastTrends
 } from "@/services/forecastService";
 
@@ -22,10 +21,6 @@ interface ForecastState {
   // Actions
   fetchWeeklyForecast: () => Promise<void>;
   fetchTodayForecast: () => Promise<void>;
-  fetchForecastByLocation: (
-    latitude: number,
-    longitude: number
-  ) => Promise<void>;
   fetchForecastTrends: (
     type?: string,
     days?: number
@@ -65,20 +60,6 @@ export const useForecastStore = create<ForecastState>((set) => ({
       console.error("Failed to fetch today's forecast:", error);
       set({
         error: "Failed to fetch today's forecast data",
-        loading: false
-      });
-    }
-  },
-
-  fetchForecastByLocation: async (latitude, longitude) => {
-    try {
-      set({ loading: true, error: null });
-      const data = await getForecastByLocation(latitude, longitude);
-      set({ weeklyForecast: data, loading: false });
-    } catch (error) {
-      console.error("Failed to fetch location forecast:", error);
-      set({
-        error: "Failed to fetch location forecast data",
         loading: false
       });
     }
