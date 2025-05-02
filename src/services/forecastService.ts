@@ -124,9 +124,32 @@ const mockCombinedTrendsData: CombinedForecastChartData[] = mockWeeklyForecast.f
 }));
 
 
+// helper function to transform API response to match our interface
+function transformAPIResponse(apiData: any[]): WeeklyForecast {
+  return {
+    forecasts: apiData.map(item => ({
+      date: item.date,
+      day: item.day,
+      weatherData: {
+        drought: item.weatherData.drought,
+        flood: item.weatherData.flood,
+        condition: getCondition(item.weatherData.drought, item.weatherData.flood),
+      },
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    })),
+    lastUpdated: apiData[0]?.updated_at || new Date().toISOString(),
+  };
+}
+
 // Service functions
 export async function getWeeklyForecast(): Promise<WeeklyForecast> {
   try {
+    // implementing real API calls:
+    // const response = await apiGet(ENDPOINTS.weeklyForecast);
+    // return transformAPIResponse(response);
+
+
     // In a real implementation, this would call the API
     // return await apiGet<WeeklyForecast>(ENDPOINTS.weeklyForecast);
 
