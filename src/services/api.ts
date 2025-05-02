@@ -1,23 +1,32 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from "axios";
 
 // Base API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.example.com";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const CSRF_TOKEN = process.env.NEXT_PUBLIC_CSRF_TOKEN;
+
+if (!API_BASE_URL) {
+  throw new Error("API_BASE_URL is not defined in environment variables.");
+}
+
 
 export const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000, // 15 seconds
   headers: {
     "Content-Type": "application/json",
+    "accept": "applications/json",
+    "X-CSRFTOKEN": CSRF_TOKEN,
+    "Access-Control-Allow-Origin": "*",
   },
 });
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
-    // You can add auth tokens here if needed
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // ensure the CSRF token is included in every request
+    if(CSRF_TOKEN) {
+      config.headers["X-CSRFTOKEN"] = CSRF_TOKEN;
+    }
     return config;
   },
   (error) => {
@@ -52,7 +61,13 @@ export async function apiGet<T>(
   config?: AxiosRequestConfig
 ): Promise<T> {
   try {
-    const response: AxiosResponse<T> = await axiosInstance.get(url, config);
+    const response = await axios.get(url, {
+      ...config, 
+      headers: {
+        ...config?.headers,
+        "X-CSRFTOKEN": CSRF_TOKEN,
+      }
+    });
     return response.data;
   } catch (error) {
     // Here we would handle the error (logging, retry, etc.)
@@ -61,51 +76,3 @@ export async function apiGet<T>(
   }
 }
 
-export async function apiPost<T, D>(
-  url: string,
-  data?: D,
-  config?: AxiosRequestConfig
-): Promise<T> {
-  try {
-    const response: AxiosResponse<T> = await axiosInstance.post(
-      url,
-      data,
-      config
-    );
-    return response.data;
-  } catch (error) {
-    console.error(`POST request to ${url} failed:`, error);
-    throw error;
-  }
-}
-
-export async function apiPut<T, D>(
-  url: string,
-  data?: D,
-  config?: AxiosRequestConfig
-): Promise<T> {
-  try {
-    const response: AxiosResponse<T> = await axiosInstance.put(
-      url,
-      data,
-      config
-    );
-    return response.data;
-  } catch (error) {
-    console.error(`PUT request to ${url} failed:`, error);
-    throw error;
-  }
-}
-
-export async function apiDelete<T>(
-  url: string,
-  config?: AxiosRequestConfig
-): Promise<T> {
-  try {
-    const response: AxiosResponse<T> = await axiosInstance.delete(url, config);
-    return response.data;
-  } catch (error) {
-    console.error(`DELETE request to ${url} failed:`, error);
-    throw error;
-  }
-}
