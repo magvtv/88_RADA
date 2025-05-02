@@ -34,10 +34,11 @@ export default withAuth(
 // Protect these routes with authentication
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/settings/:path*",
-    "/forecast/:path*",
-    "/alerts/:path*",
-    "/chat/:path*",
+    "/",
+    "/dashboard",
+    "/settings",
+    "/forecast",
+    "/alerts",
+    "/auth/:path*",
   ],
 };

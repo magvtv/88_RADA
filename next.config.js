@@ -27,6 +27,15 @@ const nextConfig = {
     ]
   },
 
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+
   // Optional: Add rewrites if you need to proxy requests
   async rewrites() {
     return [

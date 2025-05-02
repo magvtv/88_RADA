@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UIIcons } from "@/components/ui/icons";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { Loader } from "lucide-react";
