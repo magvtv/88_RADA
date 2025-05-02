@@ -12,7 +12,7 @@ interface ForecastCardProps {
 
 export function ForecastCard({ forecast, isHighlighted = false }: ForecastCardProps) {
   // Average disaster probability of both drought and floods
-  const displayDisasterProbability = (forecast.weatherData.drought + forecast.weatherData.flood ) / 2;
+  const displayDisasterProbability = (forecast.weatherData.drought_probability + forecast.weatherData.flood_probability ) / 2;
 
   // Format date
   const date = new Date(forecast.date);
@@ -45,7 +45,7 @@ export function ForecastCard({ forecast, isHighlighted = false }: ForecastCardPr
           {/* Average Disaster Probability */}
           <div>
             <p className="text-2xl font-bold">
-              {forecast.weatherData.drought}%
+              {Math.round(forecast.weatherData.drought_probability)}%
             </p>
             <p className="text-sm text-muted-foreground">{forecast.weatherData.condition}</p>
           </div>
@@ -53,7 +53,7 @@ export function ForecastCard({ forecast, isHighlighted = false }: ForecastCardPr
           {/* Disaster Probabilities details */}
           <div className="text-sm flex  flex-col items-end justify-center">
             <p>
-              Flood: {forecast.weatherData.flood}%
+              Flood: {Math.round(forecast.weatherData.flood_probability)}%
             </p>
             {displayDisasterProbability > 25 && (
               <p>Combined: {Math.round(displayDisasterProbability)}%</p>
