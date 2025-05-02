@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -23,17 +24,15 @@ import { NavIcons, UIIcons } from "@/components/ui/icons";
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const userPreferences = useUserStore((state) => state.preferences);
   const setLanguage = useUserStore((state) => state.setLanguage);
-  const setTemperatureUnit = useUserStore((state) => state.setTemperatureUnit);
+  const { data: session, status } = useSession();
 
   const languages = [
     { code: "en" as const, label: "English" },
     { code: "sw" as const, label: "Swahili" },
   ];
-
 
 
   return (
@@ -65,9 +64,9 @@ export function Header() {
               alt="RADA Logo"
               width={32}
               height={32}
-              className="h-8 w-8"
+              className="h-6 w-6 hidden md:inline-block"
             />
-            <span className="font-bold text-xl hidden sm:inline-block">
+            <span className="font-bold text-xl hidden md:inline-block">
               RADA
             </span>
           </Link>
@@ -124,66 +123,89 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="User Menu">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback>U</AvatarFallback>
+                  {session?.user?.image ? (
+                    <AvatarImage
+                      src={session.user.image}
+                      alt={session.user.name || ""}
+                    />
+                  ) : (
+                    <AvatarFallback>
+                      {session?.user?.name?.[0] || "?"}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                My Account
-                </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
-              {/* Theme Toggle */}
-              <DropdownMenuItem onClick={() => setTheme("light")}>
-                <UIIcons.Sun className="mr-2 h-4 w-4" />
-                <span>
-                  Light
-                  </span>
-                {theme === "light" && (
-                  <UIIcons.Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>
-                <UIIcons.Moon className="mr-2 h-4 w-4" />
-                <span>
-                  Dark
-                </span>
-                {theme === "dark" && (
-                  <UIIcons.Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("system")}>
-                <span className="mr-2">💻</span>
-                <span>System</span>
-                {theme === "system" && (
-                  <UIIcons.Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
 
 
-              {/* Language Menu */}
-              {languages.map((lang) => (
-                <DropdownMenuItem
-                  key={lang.code}
-                  onClick={() => setLanguage(lang.code)}
-                >
-                  <span>{lang.label}</span>
-                  {userPreferences.language === lang.code && (
-                    <UIIcons.Check className="ml-auto h-4 w-4" />
-                  )}
-                </DropdownMenuItem>
-              ))}
+            <DropdownMenuContent align="center">
+              {status === "authenticated" ? (
+                <>
+                  <DropdownMenuLabel>
+                    {session.user?.name || "My Account"}
+                  </DropdownMenuLabel>
 
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/settings">
-                  <UIIcons.Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
+                  {/* Theme Toggle */}
+                  <DropdownMenuItem onClick={() => setTheme("light")}>
+                    <UIIcons.Sun className="mr-2 h-4 w-4" />
+                    <span>
+                      Light
+                      </span>
+                    {theme === "light" && (
+                      <UIIcons.Check className="ml-auto h-4 w-4" />
+                    )}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => setTheme("dark")}>
+                    <UIIcons.Moon className="mr-2 h-4 w-4" />
+                    <span>
+                      Dark
+                    </span>
+                    {theme === "dark" && (
+                      <UIIcons.Check className="ml-auto h-4 w-4" />
+                    )}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Language Menu */}
+                  {languages.map((lang) => (
+                    <DropdownMenuItem
+                      key={lang.code}
+                      onClick={() => setLanguage(lang.code)}
+                    >
+                      <span>{lang.label}</span>
+                      {userPreferences.language === lang.code && (
+                        <UIIcons.Check className="ml-auto h-4 w-4" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+
+                  <DropdownMenuSeparator />
+
+                  {/* Logout */}
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <UIIcons.LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+              </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/auth/login">
+                      <UIIcons.User className="mr-2 h-4 w-4" />
+                      <span>Login</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link href="/auth/signup">
+                      <UIIcons.User className="mr-2 h-4 w-4" />
+                      <span>Sign Up</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

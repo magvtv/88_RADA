@@ -19,6 +19,14 @@ interface AlertItemProps {
 }
 
 export function AlertItem({ alert, onSelect }: AlertItemProps) {
+
+  // const severityColors = {
+  //   info: "bg-blue-500/10 text-blue-600",
+  //   warning: "bg-yellow-500/10 text-yellow-600",
+  //   error: "bg-red-500/10 text-red-600",
+  // }
+
+
   const markAsRead = useAlertStore((state) => state.markAsRead);
 
   // Format timestamp to relative time

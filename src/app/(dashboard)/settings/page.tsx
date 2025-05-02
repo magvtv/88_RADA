@@ -15,7 +15,6 @@ import { UIIcons } from "@/components/ui/icons";
 export default function SettingsPage() {
   const userPreferences = useUserStore((state) => state.preferences);
   const {
-    setTemperatureUnit,
     setLanguage,
     setTheme,
     setNotificationPreference,
@@ -318,6 +317,8 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/*  */}
       </div>
     </div>
   );
