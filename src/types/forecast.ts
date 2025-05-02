@@ -2,7 +2,7 @@ import { useAlertStore } from '../store/alertStore';
 export interface WeatherData {
   drought_probability: number;
   flood_probability: number;
-  condition: string;
+  condition?: string;
 }
 
 export interface DailyForecast {
@@ -21,7 +21,7 @@ export interface WeeklyForecast {
 export interface ForecastChartData {
   date: string;
   value: number;
-  type: string; // e.g., 'temperature', 'humidity', 'precipitation'
+  type: string; // e.g., 'drought', 'flood', 'both'
 }
 
 export interface CombinedForecastChartData {

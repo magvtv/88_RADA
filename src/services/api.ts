@@ -18,7 +18,7 @@ export const axiosInstance: AxiosInstance = axios.create({
     "X-CSRFTOKEN": CSRF_TOKEN,
     "Access-Control-Allow-Origin": "*",
   },
-  withCredentials: false
+  withCredentials: true
 });
 
 // Request interceptor

@@ -9,13 +9,13 @@ import {
 import axios from "axios";
 
 const ENDPOINTS = {
-  predictions: '/preds/',
-  normalPredictions: '/normal_preds',
+  predictions: 'api/proxy/preds/',
+  normalPredictions: 'api/proxy/normal_preds',
 };
 
 
 // Service functions
-export async function getForecastData(): Promise<WeeklyForecast> {
+export async function getForecastData(retryCount = 3): Promise<WeeklyForecast> {
   try {
     const response = await apiGet(ENDPOINTS.predictions);
     if(!response) {
@@ -30,8 +30,14 @@ export async function getForecastData(): Promise<WeeklyForecast> {
       console.error("Network or CORS error:", error.message);
 
       // handle specific error cases
-      if(error.code === 'ERR_NETWORK') {
+      if(error.code === 'ERR_NETWORK' && retryCount > 0) {
+        console.log(`Retrying... (${retryCount} attempts left)`); 
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return getForecastData(retryCount - 1);
         throw new Error('Unable to connect to the forecast service. Please check your connection')
+      }
+      if (error.code === 'ERR_NETWORK') {
+        throw new Error('Unable to connect to the forecast service. Please check your connection');
       }
       if (error.response?.status === 403) {
         throw new Error('Access forbidden. Please check your authentication.')
