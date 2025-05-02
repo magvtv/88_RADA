@@ -24,14 +24,6 @@ export interface ForecastChartData {
   type: string; // e.g., 'temperature', 'humidity', 'precipitation'
 }
 
-// export interface LocationData {
-//   name: string;
-//   coordinates: {
-//     latitude: number;
-//     longitude: number;
-//   };
-// }
-
 export interface CombinedForecastChartData {
   date: string;
   drought: number;
