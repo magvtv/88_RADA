@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
   Legend
 } from "recharts";
+import { getWeeklyForecast } from '@/services/forecastService'
 
 type ChartType = "drought" | "flood" | "all";
 
@@ -88,6 +89,14 @@ export default function ForecastPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      await getWeeklyForecast();
+    } catch (error) {
+      console.error("Error refreshing predictions:", error)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -101,7 +110,7 @@ export default function ForecastPage() {
             variant="outline"
             size="sm"
             className="hidden md:flex"
-            onClick={() => window.location.reload()}
+            onClick={handleRefresh}
           >
             <ActionIcons.Refresh className="mr-2 h-4 w-4" /> Refresh
           </Button>
@@ -177,7 +186,7 @@ export default function ForecastPage() {
                       dataKey="drought"
                       stroke="#FF6B6B"
                       activeDot={{ r: 8 }}
-                      strokeWidth={1}
+                      strokeWidth={2}
                       name="Drought"
                     />
                     <Line
@@ -185,7 +194,7 @@ export default function ForecastPage() {
                       dataKey="flood"
                       stroke="#4ECDC4"
                       activeDot={{ r: 8 }}
-                      strokeWidth={1}
+                      strokeWidth={2}
                       name="Flood"
                     />
                     <Legend />

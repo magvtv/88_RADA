@@ -11,6 +11,8 @@ import { AlertItem } from "@/components/alerts/AlertItem";
 import { WeatherDataIcons, NavIcons, ActionIcons } from "@/components/ui/icons";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Tooltip, ResponsiveContainer } from "recharts";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { getWeeklyForecast } from '@/services/forecastService'
+
 
 type ChartType = "drought" | "flood" | "all";
 
@@ -96,6 +98,14 @@ export default function DashboardPage() {
     }
   };
 
+    const handleRefresh = async () => {
+      try {
+        await getWeeklyForecast();
+      } catch (error) {
+        console.error("Error refreshing predictions:", error)
+      }
+    }
+
 
   return (
     <AppLayout>
@@ -111,7 +121,7 @@ export default function DashboardPage() {
               variant="outline"
               size="sm"
               className="hidden md:flex"
-              onClick={() => window.location.reload()}
+              onClick={handleRefresh}
             >
               <ActionIcons.Refresh className="mr-2 h-4 w-4" /> Refresh
             </Button>
