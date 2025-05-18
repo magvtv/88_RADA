@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +11,11 @@ import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { Loader } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
+import axios from "axios";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -22,26 +24,65 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLoading) return; // Prevent duplicate submissions
+    
     setIsLoading(true);
 
     try {
+      // First try direct login with Django backend for debugging
+      try {
+        console.log("Attempting direct backend login first...");
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login/`,
+          {
+            email: formData.email,
+            password: formData.password,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log("Direct backend login response:", response.data);
+        // If we get here, the credentials are valid with the backend
+      } catch (backendError) {
+        console.error("Direct backend login failed:", backendError);
+      }
+      
+      // Now try NextAuth login
+      console.log("Attempting NextAuth login...");
       const result = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
         redirect: false,
       });
 
+      console.log("NextAuth login result:", result);
+
       if (result?.error) {
         toast.error("Invalid credentials");
+        console.error("NextAuth error:", result.error);
       } else {
         toast.success("Logged in successfully!");
-        router.push("/");
+        // Use a timeout to avoid race conditions with response handling
+        setTimeout(() => {
+          router.push(searchParams.get("callbackUrl") || "/");
+        }, 100);
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleSignIn = () => {
+    setIsLoading(true);
+    signIn("google", { callbackUrl: searchParams.get("callbackUrl") || "/" });
   };
 
   return (
@@ -71,6 +112,7 @@ export default function LoginPage() {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -82,6 +124,7 @@ export default function LoginPage() {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -112,7 +155,8 @@ export default function LoginPage() {
           variant="outline"
           type="button"
           className="w-full"
-          onClick={() => signIn("google", { callbackUrl: "/" })}
+          onClick={handleGoogleSignIn}
+          disabled={isLoading}
         >
           <FaGoogle className="mr-2 h-4 w-4" />
           Google
