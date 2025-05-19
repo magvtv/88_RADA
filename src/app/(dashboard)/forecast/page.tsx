@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,33 +20,8 @@ import { useForecastData } from '@/hooks/useForecastData';
 
 type ChartType = "drought" | "flood" | "all";
 
-// Forecast cards section component for code splitting
-const ForecastCards = ({ weeklyForecast, loading }: { weeklyForecast: any, loading: boolean }) => {
-  if (loading || !weeklyForecast || !weeklyForecast.forecasts || weeklyForecast.forecasts.length === 0) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(7)].map((_, i) => (
-          <Skeleton key={i} className="h-[350px] w-full rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-  
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {weeklyForecast.forecasts.map((forecast: any) => (
-        <ForecastCard
-          key={forecast.date}
-          forecast={forecast}
-          isHighlighted={forecast.date === weeklyForecast.forecasts[0]?.date}
-        />
-      ))}
-    </div>
-  );
-};
-
 export default function ForecastPage() {
-  const { weeklyForecast, todayForecast, loading, error, refetch } = useForecastData();
+  const { weeklyForecast, loading, error, refetch } = useForecastData();
   const [chartType, setChartType] = useState<ChartType>("drought");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -86,19 +61,8 @@ export default function ForecastPage() {
     }
   };
 
-  // Format Y-axis tick labels
-  const formatYAxisTick = (value: number | string): string => {
-    const numValue = typeof value === 'string' ? Number.parseFloat(value) : value;
-    return `${numValue}%`;
-  };
-
-  // Format tooltip value
-  const formatTooltipValue = (value: number): string => {
-    return `${value}%`;
-  };
-
-  // Create chart data from forecast data
-  const getTrendsData = () => {
+  // Memoize the trends data to avoid recalculation on every render
+  const trendsData = useMemo(() => {
     if (!weeklyForecast || !weeklyForecast.forecasts) return [];
     
     if (chartType === "all") {
@@ -116,6 +80,12 @@ export default function ForecastPage() {
         type: chartType
       }));
     }
+  }, [weeklyForecast, chartType]);
+
+  // Format Y-axis tick labels
+  const formatYAxisTick = (value: number | string): string => {
+    const numValue = typeof value === 'string' ? Number.parseFloat(value) : value;
+    return `${numValue}%`;
   };
 
   // Change the chart type
@@ -125,7 +95,7 @@ export default function ForecastPage() {
 
   return (
     <div className="space-y-6">
-      {/* Debug Information */}
+      {/* Error Information */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           <p><strong>Error:</strong> {error}</p>
@@ -206,7 +176,7 @@ export default function ForecastPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   {chartType === "all" ? (
                     <LineChart
-                      data={getTrendsData()}
+                      data={trendsData}
                       margin={{
                         top: 20,
                         right: 30,
@@ -246,7 +216,7 @@ export default function ForecastPage() {
                     </LineChart>
                   ) : (
                     <LineChart
-                      data={getTrendsData()}
+                      data={trendsData}
                       margin={{
                         top: 20,
                         right: 30,
@@ -285,22 +255,27 @@ export default function ForecastPage() {
       </Card>
 
       {/* Weekly Forecast Cards */}
-      <Card>
-        <CardHeader>
-          <CardTitle>7-Day Forecast</CardTitle>
-          <CardDescription>Detailed disaster information</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ForecastCards weeklyForecast={weeklyForecast} loading={loading} />
-        </CardContent>
-      </Card>
-
-      {/* Last updated info */}
-      {!loading && weeklyForecast && (
-        <p className="text-sm text-muted-foreground text-center">
-          Last updated: {new Date(weeklyForecast.lastUpdated).toLocaleString()}
-        </p>
-      )}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Daily Forecasts</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {loading ? (
+            // Show skeletons while loading
+            Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton key={i} className="h-[180px] rounded-lg" />
+            ))
+          ) : weeklyForecast && weeklyForecast.forecasts && weeklyForecast.forecasts.length > 0 ? (
+            // Show actual data
+            weeklyForecast.forecasts.map((day) => (
+              <ForecastCard key={day.date} forecast={day} />
+            ))
+          ) : (
+            // Show empty state
+            <div className="col-span-full text-center py-8">
+              <p className="text-muted-foreground">No forecast data available</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-}
+} 

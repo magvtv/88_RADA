@@ -1,11 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { UserState, UserPreferences, Language, ThemeType } from "@/types/user";
+import type { UserState, UserPreferences, Language, ThemeType, UserType } from "@/types/user";
 
 // Default preferences
 const defaultPreferences: UserPreferences = {
   theme: "system",
   language: "en",
+  userType: "general",
   notifications: {
     enabled: true,
     alerts: true,
@@ -35,6 +36,14 @@ export const useUserStore = create<UserState>()(
           preferences: {
             ...state.preferences,
             language,
+          },
+      })),
+
+      setUserType: (userType: UserType) =>
+        set((state) => ({
+          preferences: {
+            ...state.preferences,
+            userType,
           },
       })),
 

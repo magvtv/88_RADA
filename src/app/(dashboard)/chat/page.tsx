@@ -11,7 +11,7 @@ import { useChatStore } from "@/store";
 import { speakText } from "@/services/ttsService";
 
 export default function ChatPage() {
-  const { messages, loading, sendMessage, clearMessages } = useChatStore();
+  const { messages, translations, loading, sendMessage, clearMessages } = useChatStore();
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -134,6 +134,7 @@ export default function ChatPage() {
                     key={message.id}
                     message={message}
                     onSpeakMessage={handleSpeakMessage}
+                    translation={translations && translations[message.id] || null}
                   />
                 ))}
                 {loading && (
@@ -153,7 +154,7 @@ export default function ChatPage() {
               ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask me about the weather..."
+              placeholder="Ask me about Baringo..."
               disabled={loading}
               className="flex-1"
             />

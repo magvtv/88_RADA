@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAlertStore } from "@/store";
+import { useAlertStore, useForecastStore } from "@/store";
 import { AlertItem } from "@/components/alerts/AlertItem";
-import { ActionIcons } from "@/components/ui/icons";
+import { ActionIcons, WeatherDataIcons } from "@/components/ui/icons";
 import type { Alert } from "@/types/alert";
+import type { DailyForecast } from "@/types/forecast";
+import { sendChatQuery } from "@/services/nlpService";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function AlertsPage() {
   const {
@@ -19,13 +23,86 @@ export default function AlertsPage() {
     fetchUnreadAlerts
   } = useAlertStore();
 
+  const { weeklyForecast, fetchWeeklyForecast } = useForecastStore();
+  
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [mitigationStrategies, setMitigationStrategies] = useState<string[]>([]);
+  const [relatedForecast, setRelatedForecast] = useState<DailyForecast | null>(null);
+  const [fetchingMitigation, setFetchingMitigation] = useState(false);
 
-  const handleAlertSelect = (id: string) => {
+  // Fetch forecast data when component mounts
+  useEffect(() => {
+    if (!weeklyForecast) {
+      fetchWeeklyForecast();
+    }
+  }, [weeklyForecast, fetchWeeklyForecast]);
+
+  const handleAlertSelect = async (id: string) => {
     const alert = alerts.find((a) => a.id === id);
     if (alert) {
       setSelectedAlert(alert);
+      setMitigationStrategies([]);
+      setRelatedForecast(null);
+      
+      // Find related forecast data if weeklyForecast exists
+      if (weeklyForecast?.forecasts && weeklyForecast.forecasts.length > 0) {
+        const alertDate = new Date(alert.timestamp);
+        const matchingForecast = weeklyForecast.forecasts.find(f => {
+          const forecastDate = new Date(f.date);
+          return forecastDate.getDate() === alertDate.getDate() && 
+                 forecastDate.getMonth() === alertDate.getMonth() && 
+                 forecastDate.getFullYear() === alertDate.getFullYear();
+        });
+        
+        if (matchingForecast) {
+          setRelatedForecast(matchingForecast);
+        }
+      }
+      
+      // Get mitigation strategies from the chatbot for this specific alert type
+      if (alert.severity === "error" || alert.severity === "warning") {
+        setFetchingMitigation(true);
+        
+        // Determine the disaster type from the alert title
+        const isFlood = alert.title.toLowerCase().includes("flood");
+        const isDrought = alert.title.toLowerCase().includes("drought") || 
+                          alert.title.toLowerCase().includes("dry spell");
+        
+        const disasterType = isFlood ? "flood" : isDrought ? "drought" : "disaster";
+        const query = `What are the top 5 mitigation strategies for ${disasterType} in ${alert.location?.name || "Baringo"}?`;
+        
+        try {
+          const response = await sendChatQuery(query);
+          // Extract bullet points or numbered list items from the response
+          const strategies = response.answer
+            .split('\n')
+            .filter(line => line.trim().startsWith('-') || 
+                   line.trim().startsWith('•') || 
+                   line.trim().startsWith('*') || 
+                   line.trim().match(/^\d+\./))
+            .map(line => line.trim());
+          
+          setMitigationStrategies(strategies.length > 0 ? strategies : [
+            "**Immediate Action**: Seek information from local authorities",
+            "**Safety**: Follow evacuation procedures if advised",
+            "**Preparation**: Store emergency food, water and medicine supplies",
+            "**Documentation**: Protect valuables and important documents",
+            "**Stay Informed**: Monitor emergency broadcasts for updates"
+          ]);
+        } catch (error) {
+          console.error("Failed to fetch mitigation strategies:", error);
+          setMitigationStrategies([
+            "**Immediate Action**: Seek information from local authorities",
+            "**Safety**: Follow evacuation procedures if advised",
+            "**Preparation**: Store emergency food, water and medicine supplies",
+            "**Documentation**: Protect valuables and important documents",
+            "**Stay Informed**: Monitor emergency broadcasts for updates"
+          ]);
+        } finally {
+          setFetchingMitigation(false);
+        }
+      }
     }
   };
 
@@ -169,7 +246,64 @@ export default function AlertsPage() {
                   </div>
                 </div>
 
-                <p className="text-sm">{selectedAlert.description}</p>
+                <div className="text-sm prose dark:prose-invert prose-sm max-w-none prose-p:my-1 prose-strong:text-primary">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {selectedAlert.description}
+                  </ReactMarkdown>
+                </div>
+
+                {/* Related forecast data */}
+                {relatedForecast && (
+                  <div className="p-3 bg-muted/40 rounded-md">
+                    <h4 className="text-sm font-medium mb-2 flex items-center">
+                      <WeatherDataIcons.Chart className="mr-2 h-4 w-4" />
+                      Related Forecast
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <p className="text-muted-foreground">Drought Risk:</p>
+                        <p className="font-medium">{relatedForecast.weatherData.drought_probability}%</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Flood Risk:</p>
+                        <p className="font-medium">{relatedForecast.weatherData.flood_probability}%</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-muted-foreground">Condition:</p>
+                        <p className="font-medium">{relatedForecast.weatherData.condition}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mitigation strategies */}
+                {fetchingMitigation ? (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium mb-2 flex items-center">
+                      <ActionIcons.Loader className="mr-2 h-4 w-4 animate-spin" />
+                      Loading Mitigation Strategies...
+                    </h4>
+                    <div className="pl-2">
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                    </div>
+                  </div>
+                ) : mitigationStrategies.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 flex items-center">
+                      <ActionIcons.Check className="mr-2 h-4 w-4" />
+                      Mitigation Strategies
+                    </h4>
+                    <div className="text-sm prose dark:prose-invert prose-sm max-w-none pl-2 prose-p:my-1 prose-strong:text-primary prose-li:my-0">
+                      {mitigationStrategies.map((strategy, index) => (
+                        <ReactMarkdown key={index} remarkPlugins={[remarkGfm]}>
+                          {strategy.replace(/^[-•\d.]+ ?/, '* ')}
+                        </ReactMarkdown>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <div className="text-sm text-muted-foreground">
@@ -183,14 +317,39 @@ export default function AlertsPage() {
                   </div>
                 </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCloseDetail}
-                  className="w-full"
-                >
-                  Close Details
-                </Button>
+                {/* Action buttons */}
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const alertType = selectedAlert.title.toLowerCase().includes("flood") ? "flood" : 
+                                       selectedAlert.title.toLowerCase().includes("drought") ? "drought" : "disaster";
+                      const userType = selectedAlert.severity === "warning" ? "farmers" : "disaster aid organizations";
+                      const location = selectedAlert.location?.name || "Baringo";
+                      
+                      // Create a more detailed markdown query
+                      const query = `# Mitigation Advice Request\n\n` +
+                        `Please provide **detailed mitigation strategies** for ${userType} dealing with ` +
+                        `${alertType} conditions in **${location}**.\n\n` +
+                        `Focus on:\n` +
+                        `- Immediate actions\n` +
+                        `- Resource management\n` +
+                        `- Coordination with authorities\n` +
+                        `- Long-term planning`;
+                        
+                      window.location.href = `/chat?query=${encodeURIComponent(query)}`;
+                    }}
+                  >
+                    Get Detailed Mitigation Advice
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCloseDetail}
+                  >
+                    Close Details
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12">
