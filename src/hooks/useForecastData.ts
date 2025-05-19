@@ -102,10 +102,7 @@ export function useForecastData(): ForecastDataState {
   // Function to trigger new predictions
   const triggerNewPredictions = async (): Promise<void> => {
     try {
-      setIsBackgroundLoading(true);
-      setError(null);
-      
-      // Call the trigger_preds endpoint with POST method as required by the server
+      // First call /trigger_preds to generate new predictions
       const response = await axios.post(`${API_URL}${ENDPOINTS.triggerPredictions}`, {}, {
         headers: {
           'Content-Type': 'application/json',
@@ -115,12 +112,7 @@ export function useForecastData(): ForecastDataState {
         timeout: 2000 // 2 second timeout - prediction generation might take longer
       });
       
-      // Log the response for debugging
-      if (typeof window !== 'undefined') {
-        console.log("Trigger predictions response:", response.data);
-      }
-      
-      // After triggering, fetch the latest predictions
+      // Then fetch the newly generated data
       await fetchData(false);
     } catch (err: any) {
       console.error('Error triggering new predictions:', err);
@@ -137,8 +129,6 @@ export function useForecastData(): ForecastDataState {
       }
       
       setError(errorMessage);
-    } finally {
-      setIsBackgroundLoading(false);
     }
   };
 

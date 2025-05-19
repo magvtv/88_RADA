@@ -55,12 +55,12 @@ export default function ForecastPageClient() {
           {isRefreshing || isBackgroundLoading ? (
             <>
               <ActionIcons.Loader className="mr-2 h-4 w-4 animate-spin" />
-              {isRefreshing ? "Refreshing..." : "Loading..."}
+              {isRefreshing ? "Updating Forecast..." : "Loading..."}
             </>
           ) : (
             <>
               <ActionIcons.Refresh className="mr-2 h-4 w-4" />
-              Refresh
+              Generate New Forecast
             </>
           )}
         </Button>

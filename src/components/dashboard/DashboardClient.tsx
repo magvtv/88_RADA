@@ -240,12 +240,12 @@ export default function DashboardClient() {
           {isRefreshing ? (
             <>
               <ActionIcons.Loader className="mr-2 h-4 w-4 animate-spin" />
-              Refreshing...
+              Updating Forecast...
             </>
           ) : (
             <>
               <ActionIcons.Refresh className="mr-2 h-4 w-4" />
-              Refresh
+              Generate New Forecast
             </>
           )}
         </Button>
