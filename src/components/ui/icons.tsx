@@ -35,6 +35,7 @@ import {
   ArrowLeft,
   HelpCircle,
   ExternalLink,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -87,6 +88,7 @@ export const ActionIcons = {
   Previous: ArrowLeft,
   Help: HelpCircle,
   ExternalLink,
+  Loader: Loader2,
 };
 
 // UI element icons

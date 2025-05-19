@@ -184,9 +184,11 @@ export function Header() {
                   <DropdownMenuSeparator />
 
                   {/* Logout */}
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    <UIIcons.LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
+                  <DropdownMenuItem asChild>
+                    <Link href="/auth/logout">
+                      <UIIcons.LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </Link>
                   </DropdownMenuItem>
               </>
               ) : (

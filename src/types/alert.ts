@@ -1,5 +1,20 @@
 export type AlertSeverity = 'info' | 'warning' | 'error';
 
+export interface DisasterForecast {
+  type: 'flood' | 'drought';
+  probability: number;
+  timefrace: {
+    start: string;
+    end: string;
+  };
+  impact: {
+    level: AlertServerity;
+    description: string;
+    affectedAreas: string[];
+    recommendations: string[];
+  }
+}
+
 export interface Alert {
   id: string;
   title: string;
@@ -10,11 +25,8 @@ export interface Alert {
   source?: string;
   location?: {
     name: string;
-    coordinates?: {
-      latitude: number;
-      longitude: number;
-    };
   };
+  forecast?: DisasterForecast;
 }
 
 export interface AlertsState {

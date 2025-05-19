@@ -67,10 +67,7 @@ export default function LoginPage() {
         console.error("NextAuth error:", result.error);
       } else {
         toast.success("Logged in successfully!");
-        // Use a timeout to avoid race conditions with response handling
-        setTimeout(() => {
-          router.push(searchParams.get("callbackUrl") || "/");
-        }, 100);
+        router.push("/")
       }
     } catch (error) {
       console.error("Login error:", error);

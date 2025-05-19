@@ -36,9 +36,15 @@ const nextConfig = {
     },
   },
 
-  // Optional: Add rewrites if you need to proxy requests
+  // Only proxy non-auth API requests
   async rewrites() {
     return [
+      // First rule: Don't rewrite NextAuth routes
+      {
+        source: '/api/auth/:path*',
+        destination: '/api/auth/:path*',
+      },
+      // Second rule: Rewrite all other API routes to the backend
       {
         source: '/api/:path*',
         destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,

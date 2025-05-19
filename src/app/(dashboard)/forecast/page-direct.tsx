@@ -20,33 +20,8 @@ import { useForecastData } from '@/hooks/useForecastData';
 
 type ChartType = "drought" | "flood" | "all";
 
-// Forecast cards section component for code splitting
-const ForecastCards = ({ weeklyForecast, loading }: { weeklyForecast: any, loading: boolean }) => {
-  if (loading || !weeklyForecast || !weeklyForecast.forecasts || weeklyForecast.forecasts.length === 0) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(7)].map((_, i) => (
-          <Skeleton key={i} className="h-[350px] w-full rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-  
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {weeklyForecast.forecasts.map((forecast: any) => (
-        <ForecastCard
-          key={forecast.date}
-          forecast={forecast}
-          isHighlighted={forecast.date === weeklyForecast.forecasts[0]?.date}
-        />
-      ))}
-    </div>
-  );
-};
-
-export default function ForecastPage() {
-  const { weeklyForecast, todayForecast, loading, error, refetch } = useForecastData();
+export default function DirectForecastPage() {
+  const { weeklyForecast, loading, error, refetch } = useForecastData();
   const [chartType, setChartType] = useState<ChartType>("drought");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -86,17 +61,6 @@ export default function ForecastPage() {
     }
   };
 
-  // Format Y-axis tick labels
-  const formatYAxisTick = (value: number | string): string => {
-    const numValue = typeof value === 'string' ? Number.parseFloat(value) : value;
-    return `${numValue}%`;
-  };
-
-  // Format tooltip value
-  const formatTooltipValue = (value: number): string => {
-    return `${value}%`;
-  };
-
   // Create chart data from forecast data
   const getTrendsData = () => {
     if (!weeklyForecast || !weeklyForecast.forecasts) return [];
@@ -118,6 +82,12 @@ export default function ForecastPage() {
     }
   };
 
+  // Format Y-axis tick labels
+  const formatYAxisTick = (value: number | string): string => {
+    const numValue = typeof value === 'string' ? Number.parseFloat(value) : value;
+    return `${numValue}%`;
+  };
+
   // Change the chart type
   const handleChartTypeChange = (type: ChartType) => {
     setChartType(type);
@@ -135,7 +105,7 @@ export default function ForecastPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Weekly Forecast</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Weekly Forecast (Direct)</h1>
           <p className="text-muted-foreground">7-day disaster predictions and trends</p>
         </div>
         <div className="flex items-center gap-2">
@@ -291,7 +261,29 @@ export default function ForecastPage() {
           <CardDescription>Detailed disaster information</CardDescription>
         </CardHeader>
         <CardContent>
-          <ForecastCards weeklyForecast={weeklyForecast} loading={loading} />
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(7)].map((_, i) => (
+                <Skeleton key={i} className="h-[350px] w-full rounded-lg" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {weeklyForecast && weeklyForecast.forecasts && weeklyForecast.forecasts.map((forecast) => (
+                <ForecastCard
+                  key={forecast.date}
+                  forecast={forecast}
+                  isHighlighted={forecast.date === weeklyForecast.forecasts[0]?.date}
+                />
+              ))}
+              
+              {(!weeklyForecast || !weeklyForecast.forecasts || weeklyForecast.forecasts.length === 0) && (
+                <div className="col-span-full text-center py-8">
+                  <p className="text-lg text-muted-foreground">No forecast data available</p>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -303,4 +295,4 @@ export default function ForecastPage() {
       )}
     </div>
   );
-}
+} 

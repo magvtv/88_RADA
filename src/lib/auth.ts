@@ -32,15 +32,11 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("Missing credentials");
           return null;
         }
         
         try {
           // Connect to Django's login endpoint
-          console.log("Authorizing with credentials:", credentials.email);
-          console.log("API URL:", `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login/`);
-          
           const response = await axios.post(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login/`,
             {
@@ -54,19 +50,12 @@ export const authOptions: NextAuthOptions = {
             }
           );
           
-          // For debugging - log status code
-          console.log("Auth response status:", response.status);
-          console.log("Auth response data:", response.data);
-          
           // With axios, we automatically get parsed JSON in response.data
           const data = response.data;
           
           // Django Rest Auth typically returns a key (token) on successful login
           if (response.status >= 200 && response.status < 300 && data) {
-            console.log("Login successful, creating user object");
-            
             // This structure matches Django Rest Auth's response format
-            // Adjust according to your actual response
             return {
               id: data.user?.pk || data.user?.id || data.id || '1',
               email: credentials.email,
@@ -75,13 +64,10 @@ export const authOptions: NextAuthOptions = {
             };
           }
           
-          console.error("Login failed:", data);
           return null;
         } catch (error) {
-          if (axios.isAxiosError(error)) {
-            console.error("Auth error response:", error.response?.data);
-          } else {
-            console.error("Auth error:", error);
+          if (axios.isAxiosError(error) && process.env.NODE_ENV === "development") {
+            console.error("Auth error status:", error.response?.status);
           }
           return null;
         }
@@ -91,17 +77,32 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/login/",
     signOut: "/auth/logout/",
-    error: "/auth/error"
+    // error: "/auth/error"
   },
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours - only update session once per day
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   callbacks: {
     async jwt({ token, user, account }) {
       // Initial sign in
       if (account && user) {
-        console.log("JWT callback - user signed in:", user);
+        // Only log during development and actual sign in
+        if (process.env.NODE_ENV === "development") {
+          console.log("JWT callback - user signed in");
+        }
         return {
           ...token,
           accessToken: user.token,
@@ -111,7 +112,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log("Session callback - creating session:", token);
+      // Remove verbose session logging
       if (session.user) {
         session.user.id = token.id as string;
         // Add access token to the session if needed
@@ -120,5 +121,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: process.env.AUTH_DEBUG === "true",
 };

@@ -1,10 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { UserState, UserPreferences, Language, TemperatureUnit, ThemeType } from "@/types/user";
+import type { UserState, UserPreferences, Language, ThemeType } from "@/types/user";
 
 // Default preferences
 const defaultPreferences: UserPreferences = {
-  temperatureUnit: "celsius",
   theme: "system",
   language: "en",
   notifications: {
@@ -23,21 +22,13 @@ export const useUserStore = create<UserState>()(
       error: null,
 
       // Actions
-      setTemperatureUnit: (unit: TemperatureUnit) =>
-        set((state) => ({
-          preferences: {
-            ...state.preferences,
-            temperatureUnit: unit,
-          },
-        })),
-
       setTheme: (theme: ThemeType) =>
         set((state) => ({
           preferences: {
             ...state.preferences,
             theme,
           },
-        })),
+      })),
 
       setLanguage: (language: Language) =>
         set((state) => ({
@@ -45,7 +36,7 @@ export const useUserStore = create<UserState>()(
             ...state.preferences,
             language,
           },
-        })),
+      })),
 
       setNotificationPreference: (
         type: "enabled" | "alerts" | "forecasts" | "chat",
@@ -59,34 +50,12 @@ export const useUserStore = create<UserState>()(
               [type]: value,
             },
           },
-        })),
-
-      setDefaultLocation: (name: string, latitude: number, longitude: number) =>
-        set((state) => ({
-          preferences: {
-            ...state.preferences,
-            defaultLocation: {
-              name,
-              coordinates: {
-                latitude,
-                longitude,
-              },
-            },
-          },
-        })),
-
-      clearDefaultLocation: () =>
-        set((state) => ({
-          preferences: {
-            ...state.preferences,
-            defaultLocation: undefined,
-          },
-        })),
+      })),
 
       resetPreferences: () =>
         set(() => ({
           preferences: defaultPreferences,
-        })),
+      })),
     }),
     {
       name: "rada-user-preferences",

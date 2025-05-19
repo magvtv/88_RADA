@@ -5,27 +5,18 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useForecastStore, useAlertStore } from "@/store";
+import { useAlertStore } from "@/store";
 import { ForecastCard } from "@/components/forecast/ForecastCard";
 import { AlertItem } from "@/components/alerts/AlertItem";
 import { WeatherDataIcons, NavIcons, ActionIcons } from "@/components/ui/icons";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, Tooltip, ResponsiveContainer } from "recharts";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { getWeeklyForecast } from '@/services/forecastService'
-
+import { useForecastData } from '@/hooks/useForecastData';
 
 type ChartType = "drought" | "flood" | "all";
 
 export default function DashboardPage() {
-  const {
-    weeklyForecast,
-    todayForecast,
-    trendsData,
-    loading: forecastLoading,
-    fetchTodayForecast,
-    fetchWeeklyForecast,
-    fetchForecastTrends
-  } = useForecastStore();
+  const { weeklyForecast, todayForecast, loading: forecastLoading, error: forecastError, refetch } = useForecastData();
   
   const {
     alerts,
@@ -35,12 +26,9 @@ export default function DashboardPage() {
   } = useAlertStore();
 
   useEffect(() => {
-    // Fetch all required data for the dashboard
-    fetchTodayForecast();
-    fetchWeeklyForecast();
+    // Fetch alerts data
     fetchUnreadAlerts();
-    fetchForecastTrends();
-  }, [fetchTodayForecast, fetchWeeklyForecast, fetchForecastTrends, fetchUnreadAlerts]);
+  }, [fetchUnreadAlerts]);
 
   // Format date for header
   const currentDate = new Date().toLocaleDateString(undefined, {
@@ -51,61 +39,63 @@ export default function DashboardPage() {
   });
 
   const [chartType, setChartType] = useState<ChartType>("drought");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Format the chart Y-axis based on chart type - make sure it returns a string
-  const formatYAxisTick = (value: number | string, index: number): string => {
+  // Format the chart Y-axis based on chart type
+  const formatYAxisTick = (value: number | string): string => {
     const numValue = typeof value === 'string' ? Number.parseFloat(value) : value;
-
-    switch (chartType) {
-      case "drought":
-        return `${numValue}%`;
-      case "flood":
-      case "all":
-        return `${numValue}%`;
-      default:
-        return String(numValue);
-    }
+    return `${numValue}%`;
   };
 
-   // Get color for the chart based on type
+  // Get color for the chart based on type
   const getChartColor = () => {
     switch (chartType) {
       case "drought":
-        return "#FF6B6B"; // Red for temperature
+        return "#FF6B6B"; // Red for drought
       case "flood":
-        return "#4ECDC4"; // Teal for humidity
+        return "#4ECDC4"; // Teal for flood
       case "all":
-        return "#8884d8"; // Default purple/ Blue for precipitation
+        return "#8884d8"; // Default purple
     }
   };
 
-  // Change the chart type and fetch new trends data
+  // Change the chart type
   const handleChartTypeChange = (type: ChartType) => {
     setChartType(type);
-    fetchForecastTrends(type);
   };
 
-   // Format tooltip values based on chart type
-   const formatTooltipValue = (value: number): string => {
-    switch (chartType) {
-      case "drought":
-        return `${value}%`;
-      case "flood":
-      case "all":
-        return `${value}%`;
-      default:
-        return String(value);
+  // Create chart data from forecast data
+  const getTrendsData = () => {
+    if (!weeklyForecast || !weeklyForecast.forecasts) return [];
+    
+    if (chartType === "all") {
+      return weeklyForecast.forecasts.map(item => ({
+        date: item.date,
+        drought: item.weatherData.drought_probability,
+        flood: item.weatherData.flood_probability
+      }));
+    } else {
+      return weeklyForecast.forecasts.map(item => ({
+        date: item.date,
+        value: chartType === "drought" 
+          ? item.weatherData.drought_probability 
+          : item.weatherData.flood_probability,
+        type: chartType
+      }));
     }
   };
 
-    const handleRefresh = async () => {
-      try {
-        await getWeeklyForecast();
-      } catch (error) {
-        console.error("Error refreshing predictions:", error)
-      }
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      await fetchUnreadAlerts();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsRefreshing(false);
     }
-
+  };
 
   return (
     <AppLayout>
@@ -122,8 +112,19 @@ export default function DashboardPage() {
               size="sm"
               className="hidden md:flex"
               onClick={handleRefresh}
+              disabled={isRefreshing}
             >
-              <ActionIcons.Refresh className="mr-2 h-4 w-4" /> Refresh
+              {isRefreshing ? (
+                <>
+                  <ActionIcons.Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <ActionIcons.Refresh className="mr-2 h-4 w-4" />
+                  Refresh
+                </>
+              )}
             </Button>
             <Button asChild variant="default" size="sm">
               <Link href="/forecast">
@@ -194,18 +195,48 @@ export default function DashboardPage() {
         <div className="md:mx-6 sm:mx-2">
           <Card>
             <CardHeader>
-              <CardTitle>Disaster Trend</CardTitle>
-              <CardDescription>7-day disaster forecast</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle>Disaster Trend</CardTitle>
+                  <CardDescription>7-day disaster forecast</CardDescription>
+                </div>
+                <div className="flex items-center gap-1 mt-4 sm:mt-0">
+                  <Button
+                    variant={chartType === "drought" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleChartTypeChange("drought")}
+                  >
+                    <WeatherDataIcons.Temperature className="mr-2 h-4 w-4" />
+                    Drought
+                  </Button>
+                  <Button
+                    variant={chartType === "flood" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleChartTypeChange("flood")}
+                  >
+                    <WeatherDataIcons.Humidity className="mr-2 h-4 w-4" />
+                    Flood
+                  </Button>
+                  <Button
+                    variant={chartType === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleChartTypeChange("all")}
+                  >
+                    <WeatherDataIcons.Chart className="mr-2 h-4 w-4" />
+                    All
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              {forecastLoading || !trendsData.length ? (
+              {forecastLoading || !weeklyForecast || !weeklyForecast.forecasts ? (
                 <Skeleton className="h-[400px] w-full rounded-lg" />
               ) : (
                 <div className="h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
                   {chartType === "all" ? (
                   <LineChart
-                    data={trendsData}
+                    data={getTrendsData()}
                     margin={{
                       top: 20,
                       right: 30,
@@ -245,7 +276,7 @@ export default function DashboardPage() {
                   </LineChart>
                 ) : (
                   <LineChart
-                    data={trendsData}
+                    data={getTrendsData()}
                     margin={{
                       top: 20,
                       right: 30,
@@ -262,7 +293,7 @@ export default function DashboardPage() {
                       tickFormatter={formatYAxisTick}
                     />
                     <Tooltip
-                      formatter={(value: number) => [formatTooltipValue(value), chartType.charAt(0).toUpperCase() + chartType.slice(1)]}
+                      formatter={(value: number) => [`${value}%`, chartType.charAt(0).toUpperCase() + chartType.slice(1)]}
                       labelFormatter={(date) => new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
                     />
                     <Line
@@ -270,7 +301,7 @@ export default function DashboardPage() {
                       dataKey="value"
                       stroke={getChartColor()}
                       activeDot={{ r: 8 }}
-                      strokeWidth={2}
+                      strokeWidth={1}
                       name={chartType.charAt(0).toUpperCase() + chartType.slice(1)}
                     />
                     <Legend />
@@ -319,5 +350,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </AppLayout>
-    );
+  );
 }

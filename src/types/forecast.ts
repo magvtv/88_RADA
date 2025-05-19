@@ -16,6 +16,7 @@ export interface DailyForecast {
 export interface WeeklyForecast {
   forecasts: DailyForecast[];
   lastUpdated: string;
+  error?: string; // Optional error message for when forecast data can't be fetched
 }
 
 export interface ForecastChartData {

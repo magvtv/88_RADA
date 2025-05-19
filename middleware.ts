@@ -6,6 +6,11 @@ export default withAuth(
     const isAuth = !!req.nextauth.token;
     const isAuthPage = req.nextUrl.pathname.startsWith("/auth/");
 
+    // Don't redirect on API routes to avoid disrupting data fetching
+    if (req.nextUrl.pathname.startsWith("/api/")) {
+      return null;
+    }
+
     if (isAuthPage) {
       if (isAuth) {
         return NextResponse.redirect(new URL("/", req.url));
@@ -26,7 +31,10 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      // Only authorize if token exists and contains required fields
+      authorized: ({ token }) => {
+        return !!token && typeof token === 'object';
+      },
     },
   }
 );
@@ -34,11 +42,9 @@ export default withAuth(
 // Protect these routes with authentication
 export const config = {
   matcher: [
-    "/",
-    "/dashboard",
-    "/settings",
-    "/forecast",
-    "/alerts",
-    "/auth/:path*",
+    "/dashboard/:path*",
+    "/settings/:path*",
+    "/forecast/:path*",
+    "/alerts/:path*",
   ],
 };
