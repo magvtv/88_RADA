@@ -8,6 +8,7 @@ import {
   Info,
   Check,
   MapPin,
+  Users,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,32 @@ export function AlertItem({ alert, onSelect }: AlertItemProps) {
   const timeAgo = formatDistanceToNow(new Date(alert.timestamp), {
     addSuffix: true,
   });
+
+  // Extract target audience from description if available
+  const getTargetAudience = (): string | null => {
+    const audienceMatch = alert.description.match(/\*\*Alert for ([^:]*)\*\*/i) || 
+                         alert.description.match(/\*\*([^:]*) Alert\*\*/i) ||
+                         alert.description.match(/\*\*Notice for ([^:]*)\*\*/i) ||
+                         alert.description.match(/\*\*Urgent Alert for ([^:]*)\*\*/i);
+    
+    return audienceMatch ? audienceMatch[1] : null;
+  };
+
+  // Get truncated description without the audience prefix
+  const getTruncatedDescription = (): string => {
+    // Remove markdown formatting and audience prefix
+    let cleanDescription = alert.description
+      .replace(/\*\*Alert for [^:]*\*\*: /g, '')
+      .replace(/\*\*[^:]*? Alert\*\*: /g, '')
+      .replace(/\*\*Notice for [^:]*\*\*: /g, '')
+      .replace(/\*\*Urgent Alert for [^:]*\*\*: /g, '')
+      .replace(/\*\*/g, '');
+    
+    // Truncate to reasonable length for card view  
+    return cleanDescription.length > 120 
+      ? cleanDescription.substring(0, 120) + '...' 
+      : cleanDescription;
+  };
 
   // Get alert icon based on severity
   const getAlertIcon = () => {
@@ -69,6 +96,8 @@ export function AlertItem({ alert, onSelect }: AlertItemProps) {
     markAsRead(alert.id);
   };
 
+  const targetAudience = getTargetAudience();
+
   return (
     <div
       className={cn(
@@ -95,9 +124,20 @@ export function AlertItem({ alert, onSelect }: AlertItemProps) {
               </Button>
             )}
           </div>
+          
+          {targetAudience && (
+            <div className="flex items-center gap-1 mt-1 mb-1">
+              <Users className="h-3 w-3 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">
+                For: {targetAudience}
+              </span>
+            </div>
+          )}
+          
           <p className="text-sm text-muted-foreground mt-1">
-            {alert.description}
+            {getTruncatedDescription()}
           </p>
+          
           <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
             <span>{timeAgo}</span>
             {alert.location && (

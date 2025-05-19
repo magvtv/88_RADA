@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAlertStore, useForecastStore } from "@/store";
+import { useAlertStore, useForecastStore, useUserStore } from "@/store";
 import { AlertItem } from "@/components/alerts/AlertItem";
 import { ActionIcons, WeatherDataIcons } from "@/components/ui/icons";
 import type { Alert } from "@/types/alert";
@@ -24,12 +24,16 @@ export default function AlertsPage() {
   } = useAlertStore();
 
   const { weeklyForecast, fetchWeeklyForecast } = useForecastStore();
+  const { preferences } = useUserStore();
   
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [userFilter, setUserFilter] = useState<string | null>(null);
   const [mitigationStrategies, setMitigationStrategies] = useState<string[]>([]);
   const [relatedForecast, setRelatedForecast] = useState<DailyForecast | null>(null);
   const [fetchingMitigation, setFetchingMitigation] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const alertsPerPage = 5;
 
   // Fetch forecast data when component mounts
   useEffect(() => {
@@ -37,6 +41,56 @@ export default function AlertsPage() {
       fetchWeeklyForecast();
     }
   }, [weeklyForecast, fetchWeeklyForecast]);
+
+  // Set initial user filter based on user preferences
+  useEffect(() => {
+    if (preferences.userType !== 'general') {
+      const filterMap: Record<string, string> = {
+        'farmer': 'Farmers',
+        'pastoralist': 'Pastoralists',
+        'aid_organization': 'Aid Organizations'
+      };
+      setUserFilter(filterMap[preferences.userType] || null);
+    }
+  }, [preferences.userType]);
+
+  // Filter alerts based on user type
+  const filteredAlerts = useMemo(() => {
+    if (!userFilter) return alerts;
+    
+    return alerts.filter(alert => {
+      const description = alert.description.toLowerCase();
+      const filterTerms: Record<string, string[]> = {
+        'Farmers': ['farmer', 'crop', 'plant', 'harvest', 'agriculture'],
+        'Pastoralists': ['pastoralist', 'livestock', 'cattle', 'animal', 'herd'],
+        'Aid Organizations': ['aid organization', 'humanitarian', 'relief', 'ngo']
+      };
+      
+      // Check if description explicitly mentions the user type
+      if (description.includes(userFilter.toLowerCase())) return true;
+      
+      // Check for related terms
+      const terms = filterTerms[userFilter] || [];
+      return terms.some(term => description.includes(term.toLowerCase()));
+    });
+  }, [alerts, userFilter]);
+
+  // Get paginated alerts
+  const paginatedAlerts = useMemo(() => {
+    const startIndex = (currentPage - 1) * alertsPerPage;
+    return filteredAlerts.slice(startIndex, startIndex + alertsPerPage);
+  }, [filteredAlerts, currentPage, alertsPerPage]);
+
+  // Calculate total pages
+  const totalPages = useMemo(() => 
+    Math.max(1, Math.ceil(filteredAlerts.length / alertsPerPage)),
+    [filteredAlerts, alertsPerPage]
+  );
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [userFilter, showUnreadOnly]);
 
   const handleAlertSelect = async (id: string) => {
     const alert = alerts.find((a) => a.id === id);
@@ -145,27 +199,59 @@ export default function AlertsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Disaster Alerts</h1>
           <p className="text-muted-foreground">
-            {unreadCount
-              ? `You have ${unreadCount} unread alert${unreadCount > 1 ? "s" : ""}`
-              : "No new alerts"}
+            {userFilter 
+              ? `${filteredAlerts.length} alert${filteredAlerts.length !== 1 ? 's' : ''} for ${userFilter}`
+              : unreadCount
+                ? `You have ${unreadCount} unread alert${unreadCount > 1 ? "s" : ""}`
+                : "No new alerts"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={showUnreadOnly ? "default" : "outline"}
-            size="sm"
-            onClick={handleToggleFilter}
-          >
-            {showUnreadOnly ? "Show All" : "Show Unread Only"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleMarkAllAsRead}
-            disabled={unreadCount === 0}
-          >
-            <ActionIcons.Check className="mr-2 h-4 w-4" /> Mark All as Read
-          </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex items-center gap-1">
+            <Button
+              variant={userFilter === 'Farmers' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setUserFilter(userFilter === 'Farmers' ? null : 'Farmers')}
+              className="text-xs px-2 py-1 h-8"
+            >
+              Farmers
+            </Button>
+            <Button
+              variant={userFilter === 'Pastoralists' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setUserFilter(userFilter === 'Pastoralists' ? null : 'Pastoralists')}
+              className="text-xs px-2 py-1 h-8"
+            >
+              Pastoralists
+            </Button>
+            <Button
+              variant={userFilter === 'Aid Organizations' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setUserFilter(userFilter === 'Aid Organizations' ? null : 'Aid Organizations')}
+              className="text-xs px-2 py-1 h-8"
+            >
+              Aid Orgs
+            </Button>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant={showUnreadOnly ? "default" : "outline"}
+              size="sm"
+              onClick={handleToggleFilter}
+              className="text-xs px-2 py-1 h-8"
+            >
+              {showUnreadOnly ? "Show All" : "Unread Only"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMarkAllAsRead}
+              disabled={unreadCount === 0}
+              className="text-xs px-2 py-1 h-8"
+            >
+              <ActionIcons.Check className="mr-2 h-3 w-3" /> Mark All Read
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -192,13 +278,55 @@ export default function AlertsPage() {
               </div>
             ) : alerts.length > 0 ? (
               <div className="space-y-2">
-                {alerts.map((alert) => (
+                {paginatedAlerts.map((alert) => (
                   <AlertItem
                     key={alert.id}
                     alert={alert}
                     onSelect={handleAlertSelect}
                   />
                 ))}
+                {filteredAlerts.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      No alerts found for {userFilter}.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => setUserFilter(null)}
+                    >
+                      <ActionIcons.Refresh className="mr-2 h-4 w-4" /> Clear Filter
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Pagination Controls */}
+                {filteredAlerts.length > 0 && totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8 p-0"
+                    >
+                      &lt;
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8 p-0"
+                    >
+                      &gt;
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12">
