@@ -1,8 +1,7 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Loader } from "lucide-react";
 
 interface AuthCheckProps {
@@ -14,20 +13,25 @@ interface AuthCheckProps {
  * Redirects to login if user is not authenticated
  */
 export function AuthCheck({ children }: AuthCheckProps) {
-  const { data: session, status } = useSession();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   
   useEffect(() => {
-    if (status === "unauthenticated") {
+    // Check if user is authenticated by looking for the token
+    const authToken = localStorage.getItem('authToken');
+    const isAuth = !!authToken;
+    setIsAuthenticated(isAuth);
+    
+    if (!isAuth) {
       // Store the current path for redirect after login
       const returnUrl = encodeURIComponent(pathname);
       router.push(`/auth/login?from=${returnUrl}`);
     }
-  }, [status, router, pathname]);
+  }, [router, pathname]);
 
   // Show loading state while checking auth
-  if (status === "loading") {
+  if (isAuthenticated === null) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader className="h-8 w-8 animate-spin text-primary" />
@@ -36,5 +40,5 @@ export function AuthCheck({ children }: AuthCheckProps) {
   }
 
   // Only render children if authenticated
-  return status === "authenticated" ? <>{children}</> : null;
+  return isAuthenticated ? <>{children}</> : null;
 } 

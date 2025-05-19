@@ -13,17 +13,17 @@ function ErrorContent() {
     
     // Handle different error types
     switch (errorType) {
-      case "Callback":
-        setError("There was a problem with the Google authentication callback.");
+      case "InvalidCredentials":
+        setError("Invalid email or password. Please try again.");
         break;
       case "AccessDenied":
         setError("Access was denied to your account.");
         break;
-      case "Configuration":
-        setError("There is a problem with the authentication configuration.");
+      case "ServerError":
+        setError("There was a server error. Please try again later.");
         break;
       default:
-        setError("An unknown authentication error occurred.");
+        setError("An authentication error occurred. Please try again.");
         break;
     }
   }, [searchParams]);

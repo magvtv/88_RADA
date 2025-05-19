@@ -8,12 +8,10 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
-// import { SignUpForm } from './components/SignUpForm
 
 function SignUpContent() {
   const [queryParams, setQueryParams] = useState<Record<string, string>>({});
@@ -28,8 +26,7 @@ function SignUpContent() {
   });
 
   const handleGoogleLogin = async () => {
-    await signIn("google", { callbackUrl });
-    setIsLoading(false);
+    toast.error("Google authentication not available");
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,9 +54,29 @@ function SignUpContent() {
         }
       );
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         toast.success("Account created successfully!");
-        router.push("/");
+        
+        // Auto-login the user if response contains token
+        if (response.data.key) {
+          localStorage.setItem('authToken', response.data.key);
+          
+          // Store user information explicitly with the provided email
+          const userData = {
+            email: formData.email,
+            // Include any additional user data from response
+            ...(response.data.user || {})
+          };
+          localStorage.setItem('user', JSON.stringify(userData));
+          
+          // Set the token in a cookie as well for middleware auth checks
+          document.cookie = `authToken=${response.data.key}; path=/; max-age=${60 * 60 * 24 * 30}`; // 30 days
+          
+          router.push("/");
+        } else {
+          // Otherwise redirect to login
+          router.push("/auth/login");
+        }
       }
     } catch (error) {
       if(axios.isAxiosError(error)) {
@@ -158,7 +175,7 @@ function SignUpContent() {
         type="button"
         className="w-full"
         onClick={handleGoogleLogin}
-        disabled={isLoading}
+        disabled={true}
       >
         <FaGoogle className="mr-2 h-4 w-4" />
         Google

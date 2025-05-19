@@ -1,27 +1,24 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Loader } from "lucide-react";
 import axios from "axios";
 
 function LogoutContent() {
   const router = useRouter();
-  const { data: session } = useSession();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Perform logout and redirect to login page
     const performLogout = async () => {
       try {
-        // 1. Call Django backend logout endpoint first
-        try {
-          // Get the access token from the NextAuth session
-          const token = (session as any)?.accessToken;
-          
-          // Only call backend if we have a token
-          if (token) {
+        // Get token from localStorage
+        const token = localStorage.getItem('authToken');
+        
+        if (token) {
+          // Call Django backend logout endpoint 
+          try {
             await axios.post(
               `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout/`,
               {},
@@ -33,16 +30,19 @@ function LogoutContent() {
               }
             );
             console.log("Backend logout successful");
+          } catch (backendError) {
+            console.error("Backend logout error:", backendError);
           }
-        } catch (backendError) {
-          console.error("Backend logout error:", backendError);
-          // Continue with frontend logout even if backend logout fails
         }
-
-        // 2. Clear client-side session with NextAuth
-        await signOut({ redirect: false });
         
-        // 3. Redirect to login page
+        // Clear local storage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        
+        // Clear the auth cookie
+        document.cookie = "authToken=; path=/; max-age=0";
+        
+        // Redirect to login page
         router.push("/auth/login");
       } catch (error) {
         console.error("Logout error:", error);
@@ -51,7 +51,7 @@ function LogoutContent() {
     };
 
     performLogout();
-  }, [router, session]);
+  }, [router]);
 
   return (
     <>

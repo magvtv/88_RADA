@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { Loader } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
@@ -30,56 +29,53 @@ function LoginContent() {
     setIsLoading(true);
 
     try {
-      // First try direct login with Django backend for debugging
-      try {
-        console.log("Attempting direct backend login first...");
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login/`,
-          {
-            email: formData.email,
-            password: formData.password,
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json'
-            }
+      // Login directly with Django backend
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login/`,
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
           }
-        );
+        }
+      );
         
-        console.log("Direct backend login response:", response.data);
-        // If we get here, the credentials are valid with the backend
-      } catch (backendError) {
-        console.error("Direct backend login failed:", backendError);
+      console.log("Login successful:", response.data);
+      
+      // Store token in localStorage for use in authenticated requests
+      if (response.data.key) {
+        localStorage.setItem('authToken', response.data.key);
+        
+        // Store user information
+        const userEmail = formData.email; // Use the email from login form
+        const userData = {
+          email: userEmail,
+          // Use other user data if it's in the response
+          ...(response.data.user || {})
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Set the token in a cookie as well for middleware auth checks
+        document.cookie = `authToken=${response.data.key}; path=/; max-age=${60 * 60 * 24 * 30}`; // 30 days
       }
       
-      // Now try NextAuth login
-      console.log("Attempting NextAuth login...");
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
-
-      console.log("NextAuth login result:", result);
-
-      if (result?.error) {
-        toast.error("Invalid credentials");
-        console.error("NextAuth error:", result.error);
-      } else {
-        toast.success("Logged in successfully!");
-        router.push("/")
-      }
+      toast.success("Logged in successfully!");
+      router.push(searchParams.get("callbackUrl") || "/");
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Something went wrong. Please try again.");
+      toast.error("Invalid credentials or server error. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = () => {
-    setIsLoading(true);
-    signIn("google", { callbackUrl: searchParams.get("callbackUrl") || "/" });
+    toast.error("Google authentication not available");
+    // For now, we're removing Google auth since we're not using NextAuth
   };
 
   return (
@@ -152,7 +148,7 @@ function LoginContent() {
         type="button"
         className="w-full"
         onClick={handleGoogleSignIn}
-        disabled={isLoading}
+        disabled={true}
       >
         <FaGoogle className="mr-2 h-4 w-4" />
         Google
