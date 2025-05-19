@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader } from "lucide-react";
-import { FaGoogle } from "react-icons/fa";
 
 function SignUpContent() {
   const [queryParams, setQueryParams] = useState<Record<string, string>>({});
@@ -25,9 +24,7 @@ function SignUpContent() {
     confirmPassword: "",
   });
 
-  const handleGoogleLogin = async () => {
-    toast.error("Google authentication not available");
-  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,27 +160,7 @@ function SignUpContent() {
         </Button>
       </form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
-      </div>
 
-      <Button
-        variant="outline"
-        type="button"
-        className="w-full"
-        onClick={handleGoogleLogin}
-        disabled={true}
-      >
-        <FaGoogle className="mr-2 h-4 w-4" />
-        Google
-      </Button>
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}

@@ -1,7 +1,7 @@
 import type { NLPResponse, ChatMessage } from "@/types/nlpResponse";
 import { v4 as uuidv4 } from "uuid";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://0.0.0.0:3001";
 
 const ENDPOINTS = {
   chatQuery: `${API_URL}/nlp/chat`,
