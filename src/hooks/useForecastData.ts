@@ -105,21 +105,38 @@ export function useForecastData(): ForecastDataState {
       setIsBackgroundLoading(true);
       setError(null);
       
-      // Call the trigger_preds endpoint with POST method instead of GET
-      await axios.post(`${API_URL}${ENDPOINTS.triggerPredictions}`, {}, {
+      // Call the trigger_preds endpoint with POST method as required by the server
+      const response = await axios.post(`${API_URL}${ENDPOINTS.triggerPredictions}`, {}, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         withCredentials: false,
-        timeout: 10000 // 10 second timeout - prediction generation might take longer
+        timeout: 2000 // 2 second timeout - prediction generation might take longer
       });
+      
+      // Log the response for debugging
+      if (typeof window !== 'undefined') {
+        console.log("Trigger predictions response:", response.data);
+      }
       
       // After triggering, fetch the latest predictions
       await fetchData(false);
     } catch (err: any) {
       console.error('Error triggering new predictions:', err);
-      setError(err.message || 'Failed to trigger new predictions');
+      
+      // Provide more detailed error information
+      let errorMessage = 'Failed to trigger new predictions';
+      
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          errorMessage = `Server error (${err.response.status}): ${err.message}`;
+        } else if (err.request) {
+          errorMessage = 'Network error: Server not responding';
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsBackgroundLoading(false);
     }

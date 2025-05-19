@@ -166,7 +166,7 @@ export function ForecastChart({
                     dataKey="drought"
                     stroke="#FF6B6B"
                     activeDot={{ r: 8 }}
-                    strokeWidth={2}
+                    strokeWidth={3}
                     name="Drought"
                   />
                   <Line
@@ -174,7 +174,7 @@ export function ForecastChart({
                     dataKey="flood"
                     stroke="#4ECDC4"
                     activeDot={{ r: 8 }}
-                    strokeWidth={2}
+                    strokeWidth={3}
                     name="Flood"
                   />
                   <Legend />
@@ -206,7 +206,7 @@ export function ForecastChart({
                     dataKey="value"
                     stroke={getChartColor()}
                     activeDot={{ r: 8 }}
-                    strokeWidth={2}
+                    strokeWidth={3}
                     name={chartType.charAt(0).toUpperCase() + chartType.slice(1)}
                   />
                   <Legend />

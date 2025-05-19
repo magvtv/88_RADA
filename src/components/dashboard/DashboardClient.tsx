@@ -131,7 +131,7 @@ const ForecastTrendChart = ({
                   dataKey="drought"
                   stroke="#FF6B6B"
                   activeDot={{ r: 8 }}
-                  strokeWidth={1}
+                  strokeWidth={3}
                   name="Drought"
                 />
                 <Line
@@ -139,7 +139,7 @@ const ForecastTrendChart = ({
                   dataKey="flood"
                   stroke="#4ECDC4"
                   activeDot={{ r: 8 }}
-                  strokeWidth={1}
+                  strokeWidth={3}
                   name="Flood"
                 />
                 <Legend />
@@ -171,7 +171,7 @@ const ForecastTrendChart = ({
                   dataKey="value"
                   stroke={getChartColor()}
                   activeDot={{ r: 8 }}
-                  strokeWidth={1}
+                  strokeWidth={3}
                   name={chartType.charAt(0).toUpperCase() + chartType.slice(1)}
                 />
                 <Legend />

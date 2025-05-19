@@ -547,8 +547,15 @@ export async function triggerPredictions(): Promise<{ success: boolean; message:
       safeLog("Triggering predictions from:", API_URL + ENDPOINTS.triggerPredictions);
     }
     
-    // Try direct axios call first to bypass any middleware issues
-    const directResponse = await axios.get(API_URL + ENDPOINTS.triggerPredictions);
+    // Use POST method as required by the server
+    const directResponse = await axios.post(API_URL + ENDPOINTS.triggerPredictions, {}, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      withCredentials: false,
+      timeout: 2000 // 2 second timeout
+    });
     const response = directResponse.data;
     
     if (!response) {
@@ -556,6 +563,11 @@ export async function triggerPredictions(): Promise<{ success: boolean; message:
         success: false,
         message: 'No response from trigger predictions endpoint'
       };
+    }
+    
+    // Handle the specific response structure from the server
+    if (response.status) {
+      safeLog("Trigger predictions response:", response.status);
     }
     
     // Clear all caches to ensure fresh data on next fetch
@@ -568,13 +580,24 @@ export async function triggerPredictions(): Promise<{ success: boolean; message:
     
     return {
       success: true,
-      message: 'Successfully triggered new predictions'
+      message: response.status || 'Successfully triggered new predictions'
     };
   } catch (error) {
     safeError("Failed to trigger predictions:", error);
+    // Provide more detailed error information if available
+    let errorMessage = 'Failed to trigger new predictions. Please try again later.';
+    
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        errorMessage = `Server error (${error.response.status}): ${error.message}`;
+      } else if (error.request) {
+        errorMessage = 'Network error: Server not responding';
+      }
+    }
+    
     return {
       success: false,
-      message: 'Failed to trigger new predictions. Please try again later.'
+      message: errorMessage
     };
   }
 }
