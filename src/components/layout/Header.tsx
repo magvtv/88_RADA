@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,16 +23,49 @@ import { NavIcons, UIIcons } from "@/components/ui/icons";
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [user, setUser] = useState<{email?: string, name?: string, image?: string} | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { theme, setTheme } = useTheme();
   const userPreferences = useUserStore((state) => state.preferences);
   const setLanguage = useUserStore((state) => state.setLanguage);
-  const { data: session, status } = useSession();
+  const router = useRouter();
 
   const languages = [
     { code: "en" as const, label: "English" },
     { code: "sw" as const, label: "Swahili" },
   ];
 
+  useEffect(() => {
+    // Check if user is authenticated by looking for the token
+    const authToken = localStorage.getItem('authToken');
+    setIsAuthenticated(!!authToken);
+    
+    // Get user data from localStorage
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+      } catch (e) {
+        console.error('Failed to parse user data', e);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    router.push('/auth/logout');
+  };
+
+  // Get initials for avatar fallback from the email
+  const getInitials = () => {
+    if (user?.name) {
+      return user.name[0].toUpperCase();
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return '?';
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
@@ -124,14 +156,14 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="User Menu">
                 <Avatar className="h-8 w-8">
-                  {session?.user?.image ? (
+                  {user?.image ? (
                     <AvatarImage
-                      src={session.user.image}
-                      alt={session.user.name || ""}
+                      src={user.image}
+                      alt={user.name || user.email || ""}
                     />
                   ) : (
                     <AvatarFallback>
-                      {session?.user?.name?.[0] || "?"}
+                      {getInitials()}
                     </AvatarFallback>
                   )}
                 </Avatar>
@@ -140,10 +172,10 @@ export function Header() {
 
 
             <DropdownMenuContent align="center">
-              {status === "authenticated" ? (
+              {isAuthenticated ? (
                 <>
                   <DropdownMenuLabel>
-                    {session.user?.name || "My Account"}
+                    {user?.email || "My Account"}
                   </DropdownMenuLabel>
 
                   {/* Theme Toggle */}

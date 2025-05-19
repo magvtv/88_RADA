@@ -39,9 +39,13 @@ function SignUpContent() {
       return;
     }
 
+    // Hardcode the API base URL as fallback
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.radaprojo.live';
+    console.log("Using API base URL:", apiBaseUrl);
+
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/registration/`, 
+        `${apiBaseUrl}/auth/registration/`, 
         {
           email: formData.email,
           password1: formData.password,
