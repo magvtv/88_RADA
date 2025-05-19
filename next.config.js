@@ -38,6 +38,9 @@ const nextConfig = {
 
   // Only proxy non-auth API requests
   async rewrites() {
+    // Provide fallback for NEXT_PUBLIC_API_BASE_URL if it's undefined
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.radaprojo.live';
+    
     return [
       // First rule: Don't rewrite NextAuth routes
       {
@@ -47,42 +50,15 @@ const nextConfig = {
       // Second rule: Rewrite all other API routes to the backend
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,
+        destination: `${apiBaseUrl}/:path*`,
       },
     ];
   },
 
   images: {
     unoptimized: true,
-    domains: [
-      "source.unsplash.com",
-      "images.unsplash.com",
-      "ext.same-assets.com",
-      "ugc.same-assets.com",
-    ],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "source.unsplash.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "ext.same-assets.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "ugc.same-assets.com",
-        pathname: "/**",
-      },
-    ],
   },
+  
   typescript: {
     ignoreBuildErrors: true,
   },
