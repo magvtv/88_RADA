@@ -13,7 +13,7 @@ import type { ChartType } from '@/components/forecast/ForecastChart';
 const ForecastChart = lazy(() => import('@/components/forecast/ForecastChart'));
 
 export default function ForecastPageClient() {
-  const { weeklyForecast, loading, isBackgroundLoading, error, refetch } = useForecastData();
+  const { weeklyForecast, loading, isBackgroundLoading, error, refetch, triggerNewPredictions } = useForecastData();
   const [chartType, setChartType] = useState<ChartType>("drought");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -21,7 +21,7 @@ export default function ForecastPageClient() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refetch(false); // Force full loading state
+      await triggerNewPredictions(); // Trigger new predictions instead of just refetching
     } catch (error) {
       console.error("Error refreshing forecast data:", error);
     } finally {

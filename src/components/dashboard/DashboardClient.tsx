@@ -186,7 +186,7 @@ const ForecastTrendChart = ({
 };
 
 export default function DashboardClient() {
-  const { weeklyForecast, todayForecast, loading: forecastLoading, error: forecastError, refetch } = useForecastData();
+  const { weeklyForecast, todayForecast, loading: forecastLoading, error: forecastError, refetch, triggerNewPredictions } = useForecastData();
   
   const {
     alerts,
@@ -211,7 +211,7 @@ export default function DashboardClient() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refetch(false);
+      await triggerNewPredictions();
       await fetchUnreadAlerts();
     } catch (error) {
       console.error("Error refreshing data:", error);

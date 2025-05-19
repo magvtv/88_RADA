@@ -18,6 +18,7 @@ export const useChatStore = create<ChatState & ChatActions>((set) => ({
   messages: [],
   loading: false,
   error: null,
+  translations: {},
 
   // Actions
   sendMessage: async (content: string) => {

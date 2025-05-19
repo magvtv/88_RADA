@@ -24,4 +24,5 @@ export interface ChatState {
   messages: ChatMessage[];
   loading: boolean;
   error: string | null;
+  translations?: Record<string, string>;
 }

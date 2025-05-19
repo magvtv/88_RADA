@@ -17,6 +17,7 @@ interface ForecastDataState {
   isBackgroundLoading: boolean;
   error: string | null;
   refetch: (showLoading?: boolean) => Promise<void>;
+  triggerNewPredictions: () => Promise<void>;
 }
 
 export function useForecastData(): ForecastDataState {
@@ -98,6 +99,32 @@ export function useForecastData(): ForecastDataState {
     return `${droughtLevel} drought | ${floodLevel} flood`;
   }
 
+  // Function to trigger new predictions
+  const triggerNewPredictions = async (): Promise<void> => {
+    try {
+      setIsBackgroundLoading(true);
+      setError(null);
+      
+      // Call the trigger_preds endpoint with POST method instead of GET
+      await axios.post(`${API_URL}${ENDPOINTS.triggerPredictions}`, {}, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        withCredentials: false,
+        timeout: 10000 // 10 second timeout - prediction generation might take longer
+      });
+      
+      // After triggering, fetch the latest predictions
+      await fetchData(false);
+    } catch (err: any) {
+      console.error('Error triggering new predictions:', err);
+      setError(err.message || 'Failed to trigger new predictions');
+    } finally {
+      setIsBackgroundLoading(false);
+    }
+  };
+
   // Initial data fetch
   useEffect(() => {
     fetchData();
@@ -109,6 +136,7 @@ export function useForecastData(): ForecastDataState {
     loading,
     isBackgroundLoading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
+    triggerNewPredictions
   };
 } 
