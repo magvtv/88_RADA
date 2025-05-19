@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Loader } from "lucide-react";
 import axios from "axios";
 
-export default function LogoutPage() {
+function LogoutContent() {
   const router = useRouter();
   const { data: session } = useSession();
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export default function LogoutPage() {
   }, [router, session]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center">
+    <>
       {error ? (
         <p className="text-red-500 mb-4">{error}</p>
       ) : (
@@ -63,6 +63,16 @@ export default function LogoutPage() {
           <p className="text-lg">Logging out...</p>
         </>
       )}
+    </>
+  );
+}
+
+export default function LogoutPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center">
+      <Suspense fallback={<div className="text-center"><Loader className="h-8 w-8 animate-spin mb-4" /><p>Preparing logout...</p></div>}>
+        <LogoutContent />
+      </Suspense>
     </div>
   );
 } 

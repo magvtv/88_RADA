@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -13,7 +13,7 @@ import { Loader } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
 import axios from "axios";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -83,92 +83,100 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="flex flex-col items-center space-y-2">
-          <Image
-            src="/logo.png"
-            alt="RADA Logo"
-            width={48}
-            height={48}
-            className="h-12 w-12"
-          />
-          <h1 className="text-2xl font-bold tracking-tight">Welcome Back</h1>
-          <p className="text-sm text-muted-foreground">
-            Sign in to your account to continue
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              "Sign In"
-            )}
-          </Button>
-        </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <Button
-          variant="outline"
-          type="button"
-          className="w-full"
-          onClick={handleGoogleSignIn}
-          disabled={isLoading}
-        >
-          <FaGoogle className="mr-2 h-4 w-4" />
-          Google
-        </Button>
-
-        <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/auth/signup"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Sign Up
-          </Link>
+    <div className="w-full max-w-sm space-y-8">
+      <div className="flex flex-col items-center space-y-2">
+        <Image
+          src="/logo.png"
+          alt="RADA Logo"
+          width={48}
+          height={48}
+          className="h-12 w-12"
+        />
+        <h1 className="text-2xl font-bold tracking-tight">Welcome Back</h1>
+        <p className="text-sm text-muted-foreground">
+          Sign in to your account to continue
         </p>
       </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="m@example.com"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            required
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            required
+            disabled={isLoading}
+          />
+        </div>
+
+        <Button className="w-full" type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader className="mr-2 h-4 w-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign In"
+          )}
+        </Button>
+      </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            Or continue with
+          </span>
+        </div>
+      </div>
+
+      <Button
+        variant="outline"
+        type="button"
+        className="w-full"
+        onClick={handleGoogleSignIn}
+        disabled={isLoading}
+      >
+        <FaGoogle className="mr-2 h-4 w-4" />
+        Google
+      </Button>
+
+      <p className="text-center text-sm text-muted-foreground">
+        Don&apos;t have an account?{" "}
+        <Link
+          href="/auth/signup"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Sign Up
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <Suspense fallback={<div className="text-center p-4">Loading login form...</div>}>
+        <LoginContent />
+      </Suspense>
     </div>
   );
 }
