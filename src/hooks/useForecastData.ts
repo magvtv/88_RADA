@@ -14,19 +14,25 @@ interface ForecastDataState {
   weeklyForecast: WeeklyForecast | null;
   todayForecast: DailyForecast | null;
   loading: boolean;
+  isBackgroundLoading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: (showLoading?: boolean) => Promise<void>;
 }
 
 export function useForecastData(): ForecastDataState {
   const [weeklyForecast, setWeeklyForecast] = useState<WeeklyForecast | null>(null);
   const [todayForecast, setTodayForecast] = useState<DailyForecast | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      } else {
+        setIsBackgroundLoading(true);
+      }
       setError(null);
       
       // Fetch data from the API
@@ -72,6 +78,7 @@ export function useForecastData(): ForecastDataState {
       setError(err.message || 'Failed to fetch forecast data');
     } finally {
       setLoading(false);
+      setIsBackgroundLoading(false);
     }
   };
 
@@ -100,6 +107,7 @@ export function useForecastData(): ForecastDataState {
     weeklyForecast,
     todayForecast,
     loading,
+    isBackgroundLoading,
     error,
     refetch: fetchData
   };

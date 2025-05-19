@@ -7,14 +7,18 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ActionIcons } from "@/components/ui/icons";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ChatMessageProps {
   message: ChatMessageType;
   onSpeakMessage?: (content: string) => void;
+  translation?: string | null;
 }
 
-export function ChatMessage({ message, onSpeakMessage }: ChatMessageProps) {
+export function ChatMessage({ message, onSpeakMessage, translation }: ChatMessageProps) {
   const [isActionsVisible, setIsActionsVisible] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
 
   // Format timestamp to relative time
   const formattedTime = formatRelative(
@@ -32,6 +36,13 @@ export function ChatMessage({ message, onSpeakMessage }: ChatMessageProps) {
       onSpeakMessage(message.content);
     }
   };
+
+  const toggleTranslation = () => {
+    setShowTranslation(prev => !prev);
+  };
+
+  // Content to display (either original message or translation)
+  const displayContent = showTranslation && translation ? translation : message.content;
 
   return (
     <div
@@ -63,7 +74,15 @@ export function ChatMessage({ message, onSpeakMessage }: ChatMessageProps) {
             : "bg-muted rounded-tl-none"
         )}
       >
-        <p className="text-sm">{message.content}</p>
+        <div className="text-sm prose dark:prose-invert prose-sm max-w-none">
+          {isUser ? (
+            <p>{displayContent}</p>
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {displayContent}
+            </ReactMarkdown>
+          )}
+        </div>
         <span className="text-xs opacity-70 mt-1 block">{formattedTime}</span>
 
         {/* Actions (only for assistant messages) */}
@@ -79,6 +98,19 @@ export function ChatMessage({ message, onSpeakMessage }: ChatMessageProps) {
             >
               <ActionIcons.Mic className="h-3 w-3" />
             </Button>
+            
+            {/* Translation toggle button - only show if translation is available */}
+            {translation && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={toggleTranslation}
+                aria-label={showTranslation ? "Show original" : "Show translation"}
+              >
+                <ActionIcons.Globe className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         )}
       </div>
