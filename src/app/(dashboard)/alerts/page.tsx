@@ -28,12 +28,22 @@ export default function AlertsPage() {
   
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-  const [userFilter, setUserFilter] = useState<string | null>(null);
   const [mitigationStrategies, setMitigationStrategies] = useState<string[]>([]);
   const [relatedForecast, setRelatedForecast] = useState<DailyForecast | null>(null);
   const [fetchingMitigation, setFetchingMitigation] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const alertsPerPage = 5;
+
+  // Get user type from preferences
+  const userType = useMemo(() => {
+    const typeMap: Record<string, string> = {
+      'farmer': 'Farmers',
+      'pastoralist': 'Pastoralists',
+      'aid_organization': 'Aid Organizations',
+      'general': 'General Users'
+    };
+    return typeMap[preferences.userType] || 'General Users';
+  }, [preferences.userType]);
 
   // Fetch forecast data when component mounts
   useEffect(() => {
@@ -42,21 +52,9 @@ export default function AlertsPage() {
     }
   }, [weeklyForecast, fetchWeeklyForecast]);
 
-  // Set initial user filter based on user preferences
-  useEffect(() => {
-    if (preferences.userType !== 'general') {
-      const filterMap: Record<string, string> = {
-        'farmer': 'Farmers',
-        'pastoralist': 'Pastoralists',
-        'aid_organization': 'Aid Organizations'
-      };
-      setUserFilter(filterMap[preferences.userType] || null);
-    }
-  }, [preferences.userType]);
-
   // Filter alerts based on user type
   const filteredAlerts = useMemo(() => {
-    if (!userFilter) return alerts;
+    if (userType === 'General Users') return alerts;
     
     return alerts.filter(alert => {
       const description = alert.description.toLowerCase();
@@ -67,13 +65,13 @@ export default function AlertsPage() {
       };
       
       // Check if description explicitly mentions the user type
-      if (description.includes(userFilter.toLowerCase())) return true;
+      if (description.includes(userType.toLowerCase())) return true;
       
       // Check for related terms
-      const terms = filterTerms[userFilter] || [];
+      const terms = filterTerms[userType] || [];
       return terms.some(term => description.includes(term.toLowerCase()));
     });
-  }, [alerts, userFilter]);
+  }, [alerts, userType]);
 
   // Get paginated alerts
   const paginatedAlerts = useMemo(() => {
@@ -90,7 +88,7 @@ export default function AlertsPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [userFilter, showUnreadOnly]);
+  }, [userType, showUnreadOnly]);
 
   const handleAlertSelect = async (id: string) => {
     const alert = alerts.find((a) => a.id === id);
@@ -114,7 +112,7 @@ export default function AlertsPage() {
         }
       }
       
-      // Get mitigation strategies from the chatbot for this specific alert type
+      // Get mitigation strategies from the chatbot based on user type and disaster
       if (alert.severity === "error" || alert.severity === "warning") {
         setFetchingMitigation(true);
         
@@ -124,7 +122,23 @@ export default function AlertsPage() {
                           alert.title.toLowerCase().includes("dry spell");
         
         const disasterType = isFlood ? "flood" : isDrought ? "drought" : "disaster";
-        const query = `What are the top 5 mitigation strategies for ${disasterType} in ${alert.location?.name || "Baringo"}?`;
+        
+        // Create query based on user type for more relevant mitigation strategies
+        let query = "";
+        
+        switch (preferences.userType) {
+          case "farmer":
+            query = `What are 5 specific mitigation strategies for farmers dealing with ${disasterType} in ${alert.location?.name || "Baringo"}? Focus on crop protection, irrigation, soil management, and agricultural practices.`;
+            break;
+          case "pastoralist":
+            query = `What are 5 specific mitigation strategies for pastoralists dealing with ${disasterType} in ${alert.location?.name || "Baringo"}? Focus on livestock management, fodder preservation, water access, and herd movement.`;
+            break;
+          case "aid_organization":
+            query = `What are 5 specific mitigation strategies for disaster aid organizations dealing with ${disasterType} in ${alert.location?.name || "Baringo"}? Focus on resource distribution, emergency response, community coordination, and vulnerable population support.`;
+            break;
+          default:
+            query = `What are the top 5 mitigation strategies for ${disasterType} in ${alert.location?.name || "Baringo"}?`;
+        }
         
         try {
           const response = await sendChatQuery(query);
@@ -137,22 +151,88 @@ export default function AlertsPage() {
                    line.trim().match(/^\d+\./))
             .map(line => line.trim());
           
-          setMitigationStrategies(strategies.length > 0 ? strategies : [
-            "**Immediate Action**: Seek information from local authorities",
-            "**Safety**: Follow evacuation procedures if advised",
-            "**Preparation**: Store emergency food, water and medicine supplies",
-            "**Documentation**: Protect valuables and important documents",
-            "**Stay Informed**: Monitor emergency broadcasts for updates"
-          ]);
+          if (strategies.length > 0) {
+            setMitigationStrategies(strategies);
+          } else {
+            // Fallback strategies based on user type
+            switch (preferences.userType) {
+              case "farmer":
+                setMitigationStrategies([
+                  "**Crop Selection**: Switch to drought-resistant or flood-tolerant crop varieties",
+                  "**Water Management**: Implement efficient irrigation systems or drainage channels",
+                  "**Soil Protection**: Use mulching to retain soil moisture or prevent erosion",
+                  "**Planting Schedule**: Adjust planting times based on weather forecasts",
+                  "**Storage**: Secure harvested crops in elevated or waterproof storage"
+                ]);
+                break;
+              case "pastoralist":
+                setMitigationStrategies([
+                  "**Herd Management**: Reduce herd size in anticipation of limited resources",
+                  "**Fodder Storage**: Stockpile hay and supplements for emergency feeding",
+                  "**Water Sources**: Map alternative water points and develop water harvesting",
+                  "**Movement Planning**: Identify safe routes and grazing areas in advance",
+                  "**Livestock Health**: Vaccinate animals and maintain preventive medications"
+                ]);
+                break;
+              case "aid_organization":
+                setMitigationStrategies([
+                  "**Resource Mapping**: Identify vulnerable communities and pre-position supplies",
+                  "**Coordination**: Establish clear communication channels with local authorities",
+                  "**Shelter Preparation**: Ready evacuation centers with essential facilities",
+                  "**Logistics Planning**: Secure transport routes for aid distribution",
+                  "**Vulnerable Groups**: Develop specific support plans for children, elderly, and disabled"
+                ]);
+                break;
+              default:
+                setMitigationStrategies([
+                  "**Immediate Action**: Seek information from local authorities",
+                  "**Safety**: Follow evacuation procedures if advised",
+                  "**Preparation**: Store emergency food, water and medicine supplies",
+                  "**Documentation**: Protect valuables and important documents",
+                  "**Stay Informed**: Monitor emergency broadcasts for updates"
+                ]);
+            }
+          }
         } catch (error) {
           console.error("Failed to fetch mitigation strategies:", error);
-          setMitigationStrategies([
-            "**Immediate Action**: Seek information from local authorities",
-            "**Safety**: Follow evacuation procedures if advised",
-            "**Preparation**: Store emergency food, water and medicine supplies",
-            "**Documentation**: Protect valuables and important documents",
-            "**Stay Informed**: Monitor emergency broadcasts for updates"
-          ]);
+          // Use the same fallback strategies as above
+          switch (preferences.userType) {
+            case "farmer":
+              setMitigationStrategies([
+                "**Crop Selection**: Switch to drought-resistant or flood-tolerant crop varieties",
+                "**Water Management**: Implement efficient irrigation systems or drainage channels",
+                "**Soil Protection**: Use mulching to retain soil moisture or prevent erosion",
+                "**Planting Schedule**: Adjust planting times based on weather forecasts",
+                "**Storage**: Secure harvested crops in elevated or waterproof storage"
+              ]);
+              break;
+            case "pastoralist":
+              setMitigationStrategies([
+                "**Herd Management**: Reduce herd size in anticipation of limited resources",
+                "**Fodder Storage**: Stockpile hay and supplements for emergency feeding",
+                "**Water Sources**: Map alternative water points and develop water harvesting",
+                "**Movement Planning**: Identify safe routes and grazing areas in advance",
+                "**Livestock Health**: Vaccinate animals and maintain preventive medications"
+              ]);
+              break;
+            case "aid_organization":
+              setMitigationStrategies([
+                "**Resource Mapping**: Identify vulnerable communities and pre-position supplies",
+                "**Coordination**: Establish clear communication channels with local authorities",
+                "**Shelter Preparation**: Ready evacuation centers with essential facilities",
+                "**Logistics Planning**: Secure transport routes for aid distribution",
+                "**Vulnerable Groups**: Develop specific support plans for children, elderly, and disabled"
+              ]);
+              break;
+            default:
+              setMitigationStrategies([
+                "**Immediate Action**: Seek information from local authorities",
+                "**Safety**: Follow evacuation procedures if advised",
+                "**Preparation**: Store emergency food, water and medicine supplies",
+                "**Documentation**: Protect valuables and important documents",
+                "**Stay Informed**: Monitor emergency broadcasts for updates"
+              ]);
+          }
         } finally {
           setFetchingMitigation(false);
         }
@@ -199,59 +279,31 @@ export default function AlertsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Disaster Alerts</h1>
           <p className="text-muted-foreground">
-            {userFilter 
-              ? `${filteredAlerts.length} alert${filteredAlerts.length !== 1 ? 's' : ''} for ${userFilter}`
-              : unreadCount
+            {userType !== 'General Users' 
+              ? `${filteredAlerts.length} ${userType} alert${filteredAlerts.length !== 1 ? 's' : ''}`
+              : unreadCount > 0
                 ? `You have ${unreadCount} unread alert${unreadCount > 1 ? "s" : ""}`
                 : "No new alerts"}
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="flex items-center gap-1">
-            <Button
-              variant={userFilter === 'Farmers' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setUserFilter(userFilter === 'Farmers' ? null : 'Farmers')}
-              className="text-xs px-2 py-1 h-8"
-            >
-              Farmers
-            </Button>
-            <Button
-              variant={userFilter === 'Pastoralists' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setUserFilter(userFilter === 'Pastoralists' ? null : 'Pastoralists')}
-              className="text-xs px-2 py-1 h-8"
-            >
-              Pastoralists
-            </Button>
-            <Button
-              variant={userFilter === 'Aid Organizations' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setUserFilter(userFilter === 'Aid Organizations' ? null : 'Aid Organizations')}
-              className="text-xs px-2 py-1 h-8"
-            >
-              Aid Orgs
-            </Button>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant={showUnreadOnly ? "default" : "outline"}
-              size="sm"
-              onClick={handleToggleFilter}
-              className="text-xs px-2 py-1 h-8"
-            >
-              {showUnreadOnly ? "Show All" : "Unread Only"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleMarkAllAsRead}
-              disabled={unreadCount === 0}
-              className="text-xs px-2 py-1 h-8"
-            >
-              <ActionIcons.Check className="mr-2 h-3 w-3" /> Mark All Read
-            </Button>
-          </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showUnreadOnly ? "default" : "outline"}
+            size="sm"
+            onClick={handleToggleFilter}
+            className="h-8"
+          >
+            {showUnreadOnly ? "Show All" : "Unread Only"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleMarkAllAsRead}
+            disabled={unreadCount === 0}
+            className="h-8"
+          >
+            <ActionIcons.Check className="mr-2 h-3 w-3" /> Mark All Read
+          </Button>
         </div>
       </div>
 
@@ -288,16 +340,8 @@ export default function AlertsPage() {
                 {filteredAlerts.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-muted-foreground">
-                      No alerts found for {userFilter}.
+                      No alerts currently available for {userType}.
                     </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4"
-                      onClick={() => setUserFilter(null)}
-                    >
-                      <ActionIcons.Refresh className="mr-2 h-4 w-4" /> Clear Filter
-                    </Button>
                   </div>
                 )}
                 
@@ -452,19 +496,56 @@ export default function AlertsPage() {
                     onClick={() => {
                       const alertType = selectedAlert.title.toLowerCase().includes("flood") ? "flood" : 
                                        selectedAlert.title.toLowerCase().includes("drought") ? "drought" : "disaster";
-                      const userType = selectedAlert.severity === "warning" ? "farmers" : "disaster aid organizations";
                       const location = selectedAlert.location?.name || "Baringo";
                       
-                      // Create a more detailed markdown query
-                      const query = `# Mitigation Advice Request\n\n` +
-                        `Please provide **detailed mitigation strategies** for ${userType} dealing with ` +
-                        `${alertType} conditions in **${location}**.\n\n` +
-                        `Focus on:\n` +
-                        `- Immediate actions\n` +
-                        `- Resource management\n` +
-                        `- Coordination with authorities\n` +
-                        `- Long-term planning`;
-                        
+                      // Create a more detailed markdown query based on user type
+                      let query = "";
+                      
+                      switch (preferences.userType) {
+                        case "farmer":
+                          query = `# Farmer Mitigation Strategies\n\n` +
+                            `Please provide **detailed agriculture-specific strategies** for farmers dealing with ` +
+                            `${alertType} conditions in **${location}**.\n\n` +
+                            `Focus on:\n` +
+                            `- Crop protection techniques\n` +
+                            `- Water management for ${alertType === "drought" ? "conservation" : "drainage"}\n` +
+                            `- Soil management practices\n` +
+                            `- Post-disaster recovery for farm productivity`;
+                          break;
+                          
+                        case "pastoralist":
+                          query = `# Pastoralist Mitigation Strategies\n\n` +
+                            `Please provide **detailed livestock management strategies** for pastoralists dealing with ` +
+                            `${alertType} conditions in **${location}**.\n\n` +
+                            `Focus on:\n` +
+                            `- Livestock protection during ${alertType}\n` +
+                            `- Feed and water access solutions\n` +
+                            `- Herd movement planning\n` +
+                            `- Animal health during emergencies`;
+                          break;
+                          
+                        case "aid_organization":
+                          query = `# Disaster Aid Organization Strategies\n\n` +
+                            `Please provide **detailed emergency response protocols** for aid organizations dealing with ` +
+                            `${alertType} conditions in **${location}**.\n\n` +
+                            `Focus on:\n` +
+                            `- Resource distribution systems\n` +
+                            `- Vulnerable population support\n` +
+                            `- Coordination with local authorities\n` +
+                            `- Post-disaster recovery planning`;
+                          break;
+                          
+                        default:
+                          query = `# Mitigation Advice Request\n\n` +
+                            `Please provide **detailed mitigation strategies** for dealing with ` +
+                            `${alertType} conditions in **${location}**.\n\n` +
+                            `Focus on:\n` +
+                            `- Immediate actions\n` +
+                            `- Resource management\n` +
+                            `- Coordination with authorities\n` +
+                            `- Long-term planning`;
+                      }
+                      
                       window.location.href = `/chat?query=${encodeURIComponent(query)}`;
                     }}
                   >
