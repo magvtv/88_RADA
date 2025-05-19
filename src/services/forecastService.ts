@@ -22,10 +22,25 @@ const CACHE_KEYS = {
   TODAY_FORECAST: 'today_forecast_cache',
   TRENDS: 'trends_cache'
 };
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+// Safe console logging (only on client)
+const safeLog = (...args: any[]) => {
+  if (typeof window !== 'undefined') {
+    console.log(...args);
+  }
+};
+
+// Safe console error (only on client)
+const safeError = (...args: any[]) => {
+  if (typeof window !== 'undefined') {
+    console.error(...args);
+  }
+};
 
 // Cache helper functions
 function getFromCache<T>(key: string): T | null {
+  // Only run on client-side
   if (typeof window === 'undefined') return null;
   
   try {
@@ -42,12 +57,13 @@ function getFromCache<T>(key: string): T | null {
     
     return null;
   } catch (error) {
-    console.error(`Error reading from cache (${key}):`, error);
+    safeError(`Error reading from cache (${key}):`, error);
     return null;
   }
 }
 
 function setToCache<T>(key: string, data: T): void {
+  // Only run on client-side
   if (typeof window === 'undefined') return;
   
   try {
@@ -57,52 +73,60 @@ function setToCache<T>(key: string, data: T): void {
     };
     sessionStorage.setItem(key, JSON.stringify(cacheData));
   } catch (error) {
-    console.error(`Error writing to cache (${key}):`, error);
+    safeError(`Error writing to cache (${key}):`, error);
   }
 }
 
 // Service functions with caching
-export async function getForecastData(retryCount = 1, useCache = true): Promise<WeeklyForecast> {
+export async function getForecastData(retryCount = 2, useCache = true): Promise<WeeklyForecast> {
+  // Skip cache on server-side
+  const isClient = typeof window !== 'undefined';
+  const shouldUseCache = isClient && useCache;
+  
   // Try to get from cache first
-  if (useCache) {
+  if (shouldUseCache) {
     const cached = getFromCache<WeeklyForecast>(CACHE_KEYS.FORECAST);
     if (cached) {
-      console.log('Using cached forecast data');
+      safeLog('Using cached forecast data');
+      // If we have cached data, start a background refresh but return the cached data immediately
+      if (navigator.onLine) {
+        setTimeout(() => {
+          getForecastData(0, false).catch(e => {
+            safeError('Background refresh failed:', e);
+          });
+        }, 100);
+      }
       return cached;
     }
   }
   
   try {
-    console.log("Fetching forecast data from endpoint:", ENDPOINTS.predictions);
-    // Get direct API response using a hardcoded URL for immediate testing
-    const API_URL = "https://www.radaprojo.live";
-    console.log("Using hardcoded API URL:", API_URL + ENDPOINTS.predictions);
+    // Use the API URL from env when available, fallback to hardcoded
+    const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://www.radaprojo.live";
     
-    // Try direct axios call first to bypass any middleware issues
-    const directResponse = await axios.get(API_URL + ENDPOINTS.predictions);
+    // Suppress detailed logging on server
+    if (isClient) {
+      safeLog("Fetching forecast data from endpoint:", ENDPOINTS.predictions);
+    }
+    
+    // Try direct axios call with shorter timeout for faster failures
+    const directResponse = await axios.get(API_URL + ENDPOINTS.predictions, {
+      timeout: 3000 // Reduced timeout to 3 seconds
+    });
     const response = directResponse.data;
-    
-    console.log("Raw API response type:", typeof response);
-    console.log("Is array?", Array.isArray(response));
-    console.log("API response data sample:", Array.isArray(response) && response.length > 0 ? JSON.stringify(response[0], null, 2) : response);
     
     // Validate response
     if (!response) {
-      console.error("Response is null or undefined");
       return createEmptyForecast('No data received from the forecast service');
     }
     
     if (!Array.isArray(response)) {
-      console.error("Response is not an array:", response);
       return createEmptyForecast('Invalid forecast data format - expected an array');
     }
     
     if (response.length === 0) {
-      console.warn("Received empty array response");
       return createEmptyForecast('Empty forecast data received');
     }
-    
-    console.log("Sample forecast item:", response[0]);
     
     // Process the response data using our helper function
     const transformedData = {
@@ -110,8 +134,8 @@ export async function getForecastData(retryCount = 1, useCache = true): Promise<
       lastUpdated: response[0]?.updated_at || new Date().toISOString(),
     };
     
-    // Cache the result
-    if (transformedData.forecasts.length > 0) {
+    // Cache the result (client-side only)
+    if (isClient && transformedData.forecasts.length > 0) {
       setToCache(CACHE_KEYS.FORECAST, transformedData);
     }
     
@@ -120,21 +144,30 @@ export async function getForecastData(retryCount = 1, useCache = true): Promise<
     if(axios.isAxiosError(error)) {
       // Log actual error details for debugging
       if (error.response) {
-        console.error("API Error:", error.response.status, error.message);
+        safeError("API Error:", error.response.status, error.message);
       } else if (error.request) {
-        console.error("Request Error:", error.message, error.code);
+        safeError("Request Error:", error.message, error.code);
       } else {
-        console.error("Axios Config Error:", error.message);
+        safeError("Axios Config Error:", error.message);
       }
 
-      // Simple retry mechanism with only 1 retry
+      // Improved retry mechanism with exponential backoff
       if(error.code === 'ERR_NETWORK' && retryCount > 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const backoffTime = Math.pow(2, 3 - retryCount) * 500; // Exponential backoff starting at 500ms
+        await new Promise(resolve => setTimeout(resolve, backoffTime));
         return getForecastData(retryCount - 1, false);
       }
       
-      // For all network-related errors, return empty data instead of throwing
+      // For all network-related errors, try to return cached data as fallback
       if (error.code === 'ERR_NETWORK' || !error.response) {
+        const cachedData = getFromCache<WeeklyForecast>(CACHE_KEYS.FORECAST);
+        if (cachedData) {
+          safeLog('Network error, falling back to cached data');
+          return {
+            ...cachedData,
+            error: 'Using cached data - API server unavailable' // Add error message but still return data
+          };
+        }
         return createEmptyForecast('API server unavailable');
       }
       
@@ -143,7 +176,17 @@ export async function getForecastData(retryCount = 1, useCache = true): Promise<
       }
     }
     
-    console.error("Failed to fetch predictions:", error);
+    safeError("Failed to fetch predictions:", error);
+    
+    // Try to return cached data as fallback
+    const cachedData = getFromCache<WeeklyForecast>(CACHE_KEYS.FORECAST);
+    if (cachedData) {
+      safeLog('Error fetching data, falling back to cached data');
+      return {
+        ...cachedData,
+        error: 'Using cached data - Could not fetch latest data' // Add error message but still return data
+      };
+    }
     
     // Always return empty forecast instead of throwing to prevent page crashes
     return createEmptyForecast('Unknown error occurred');
@@ -152,7 +195,7 @@ export async function getForecastData(retryCount = 1, useCache = true): Promise<
 
 // Helper function to create an empty forecast with a reason
 function createEmptyForecast(reason: string): WeeklyForecast {
-  console.info(`Creating empty forecast: ${reason}`);
+  safeLog(`Creating empty forecast: ${reason}`);
   return {
     forecasts: [],
     lastUpdated: new Date().toISOString(),
@@ -164,13 +207,13 @@ function createEmptyForecast(reason: string): WeeklyForecast {
 function getCondition(droughtProb: number, floodProb: number): string {
   // Check if the values are undefined/null, or valid numbers
   if(droughtProb === undefined || droughtProb === null || floodProb === undefined || floodProb === null) {
-    console.warn('Missing probability values:', { drought: droughtProb, flood: floodProb });
+    safeLog('Missing probability values:', { drought: droughtProb, flood: floodProb });
     return "Unknown conditions";
   }
   
   // Check for NaN or negative values
   if(isNaN(droughtProb) || isNaN(floodProb) || droughtProb < 0 || floodProb < 0) {
-    console.warn('Invalid probability values:', { drought: droughtProb, flood: floodProb });
+    safeLog('Invalid probability values:', { drought: droughtProb, flood: floodProb });
     return "Invalid data";
   }
   
@@ -221,18 +264,20 @@ function isValidDailyForecast(item: any): boolean {
     
     return false;
   } catch (error) {
-    console.error("Error validating forecast item:", error);
+    safeError("Error validating forecast item:", error);
     return false;
   }
 }
 
 // Separate data fetching functions
 export async function getTodayForecast(useCache = true): Promise<DailyForecast> {
+  const isClient = typeof window !== 'undefined';
+  
   // Try to get from cache first
-  if (useCache) {
+  if (isClient && useCache) {
     const cached = getFromCache<DailyForecast>(CACHE_KEYS.TODAY_FORECAST);
     if (cached) {
-      console.log('Using cached today forecast data');
+      safeLog('Using cached today forecast data');
       return cached;
     }
   }
@@ -240,7 +285,9 @@ export async function getTodayForecast(useCache = true): Promise<DailyForecast> 
   try {
     // Direct API request with hardcoded URL
     const API_URL = "https://www.radaprojo.live";
-    console.log("Fetching today's forecast from:", API_URL + ENDPOINTS.predictions);
+    if (isClient) {
+      safeLog("Fetching today's forecast from:", API_URL + ENDPOINTS.predictions);
+    }
     
     // Try direct axios call first to bypass any middleware issues
     const directResponse = await axios.get(API_URL + ENDPOINTS.predictions);
@@ -255,21 +302,23 @@ export async function getTodayForecast(useCache = true): Promise<DailyForecast> 
     const todayForecast = processForecastItem(todayData);
     
     // Cache the result
-    setToCache(CACHE_KEYS.TODAY_FORECAST, todayForecast);
+    if (isClient) {
+      setToCache(CACHE_KEYS.TODAY_FORECAST, todayForecast);
+    }
     return todayForecast;
   } catch (error) {
     if(axios.isAxiosError(error)) {
       // Log actual error details for debugging
       if (error.response) {
-        console.error("API Error (today's forecast):", error.response.status);
+        safeError("API Error (today's forecast):", error.response.status);
       } else if (error.request) {
-        console.error("Request Error (today's forecast):", error.message);
+        safeError("Request Error (today's forecast):", error.message);
       } else {
-        console.error("Axios Config Error (today's forecast):", error.message);
+        safeError("Axios Config Error (today's forecast):", error.message);
       }
     }
     
-    console.error("Failed to fetch today's forecast:", error);
+    safeError("Failed to fetch today's forecast:", error);
     
     // Return an empty forecast with appropriate message
     return createEmptyDailyForecast('Failed to fetch forecast');
@@ -302,12 +351,14 @@ export async function getForecastTrends(
   days = 7,
   useCache = true
 ): Promise<ForecastChartData[] | CombinedForecastChartData[]> {
+  const isClient = typeof window !== 'undefined';
+  
   // Try to get from cache first with type-specific key
   const cacheKey = `${CACHE_KEYS.TRENDS}_${type}`;
-  if (useCache) {
+  if (isClient && useCache) {
     const cached = getFromCache<ForecastChartData[] | CombinedForecastChartData[]>(cacheKey);
     if (cached) {
-      console.log(`Using cached ${type} trends data`);
+      safeLog(`Using cached ${type} trends data`);
       return cached;
     }
   }
@@ -315,7 +366,9 @@ export async function getForecastTrends(
   try {
     // Use main forecast data for all trend types
     const API_URL = "https://www.radaprojo.live";
-    console.log("Fetching trends from:", API_URL + ENDPOINTS.predictions);
+    if (isClient) {
+      safeLog("Fetching trends from:", API_URL + ENDPOINTS.predictions);
+    }
     
     // Try direct axios call first to bypass any middleware issues
     const directResponse = await axios.get(API_URL + ENDPOINTS.predictions);
@@ -348,23 +401,25 @@ export async function getForecastTrends(
     }
     
     // Cache the result
-    setToCache(cacheKey, result);
+    if (isClient) {
+      setToCache(cacheKey, result);
+    }
     return result;
   } catch (error) {
     if(axios.isAxiosError(error)) {
       // Log actual error details for debugging
       if (error.request) {
-        console.error("Request Error (trends):", error.message);
+        safeError("Request Error (trends):", error.message);
       } else {
-        console.error("Axios Config Error (trends):", error.message);
+        safeError("Axios Config Error (trends):", error.message);
       }
       
       // Network errors should return empty data instead of throwing
       if(error.code === 'ERR_NETWORK' || !error.response) {
-        console.info("Trends data unavailable, returning empty array");
+        safeLog("Trends data unavailable, returning empty array");
       }
     }
-    console.error("Failed to fetch forecast trends:", error);
+    safeError("Failed to fetch forecast trends:", error);
     
     // Always return empty array instead of throwing
     return type === "all" 
@@ -375,11 +430,13 @@ export async function getForecastTrends(
 
 // Optimized normal predictions function with caching
 export async function getNormalPredictions(useCache = true): Promise<WeeklyForecast> {
+  const isClient = typeof window !== 'undefined';
+  
   // Try to get from cache first
-  if (useCache) {
+  if (isClient && useCache) {
     const cached = getFromCache<WeeklyForecast>(CACHE_KEYS.NORMAL_PREDICTIONS);
     if (cached) {
-      console.log('Using cached normal predictions data');
+      safeLog('Using cached normal predictions data');
       return cached;
     }
   }
@@ -387,32 +444,60 @@ export async function getNormalPredictions(useCache = true): Promise<WeeklyForec
   try {
     // Direct API request with hardcoded URL
     const API_URL = "https://www.radaprojo.live";
-    console.log("Fetching normal predictions from:", API_URL + ENDPOINTS.normalPredictions);
+    if (isClient) {
+      safeLog("Fetching normal predictions from:", API_URL + ENDPOINTS.normalPredictions);
+    }
     
     // Try direct axios call first to bypass any middleware issues
     const directResponse = await axios.get(API_URL + ENDPOINTS.normalPredictions);
     const response = directResponse.data;
+    
+    if (isClient) {
+      safeLog("Normal predictions response:", response);
+    }
     
     // Validate response
     if(!response) {
       return createEmptyForecast('No data received from the normal predictions service');
     }
     
+    // Handle the specific response format where response is an object with status field
+    if (typeof response === 'object' && 'status' in response) {
+      if (isClient) {
+        safeLog("Received status response from normal predictions:", response.status);
+      }
+      
+      // If it's a success status but no actual predictions, create a placeholder
+      if (response.status === "success") {
+        return {
+          forecasts: [],
+          lastUpdated: new Date().toISOString(),
+          error: 'No prediction data available yet. Try generating new predictions.'
+        };
+      }
+      
+      return createEmptyForecast(`API status: ${response.status}`);
+    }
+    
+    // Check if response is an array
+    if (!Array.isArray(response)) {
+      safeError("Normal predictions response is not an array:", response);
+      return createEmptyForecast('Invalid normal predictions format - expected an array');
+    }
+    
     // Handle empty array response
-    if (Array.isArray(response) && response.length === 0) {
+    if (response.length === 0) {
       return createEmptyForecast('Empty normal predictions response');
     }
     
     // Process response data using our helper function
     const transformedData = {
-      forecasts: (response as any[]).map(item => processForecastItem(item)),
-      lastUpdated: Array.isArray(response) && response.length > 0 ? 
-        (response[0] as any).updated_at || new Date().toISOString() : 
-        new Date().toISOString(),
+      forecasts: response.map(item => processForecastItem(item)),
+      lastUpdated: response[0]?.updated_at || new Date().toISOString(),
     };
     
     // Cache the result
-    if (transformedData.forecasts.length > 0) {
+    if (isClient && transformedData.forecasts.length > 0) {
       setToCache(CACHE_KEYS.NORMAL_PREDICTIONS, transformedData);
     }
     
@@ -421,11 +506,11 @@ export async function getNormalPredictions(useCache = true): Promise<WeeklyForec
     if(axios.isAxiosError(error)) {
       // Log actual error details for debugging
       if (error.response) {
-        console.error("API Error (normal predictions):", error.response.status, error.message);
+        safeError("API Error (normal predictions):", error.response.status, error.message);
       } else if (error.request) {
-        console.error("Request Error (normal predictions):", error.message, error.code);
+        safeError("Request Error (normal predictions):", error.message, error.code);
       } else {
-        console.error("Axios Config Error (normal predictions):", error.message);
+        safeError("Axios Config Error (normal predictions):", error.message);
       }
 
       // Simple retry mechanism with only 1 retry
@@ -444,7 +529,7 @@ export async function getNormalPredictions(useCache = true): Promise<WeeklyForec
       }
     }
     
-    console.error("Failed to fetch normal predictions:", error);
+    safeError("Failed to fetch normal predictions:", error);
     
     // Always return empty forecast instead of throwing to prevent page crashes
     return createEmptyForecast('Unknown error fetching normal predictions');
@@ -453,10 +538,14 @@ export async function getNormalPredictions(useCache = true): Promise<WeeklyForec
 
 // Only trigger predictions on demand - not during regular page loads
 export async function triggerPredictions(): Promise<{ success: boolean; message: string }> {
+  const isClient = typeof window !== 'undefined';
+  
   try {
     // Direct API request with hardcoded URL
     const API_URL = "https://www.radaprojo.live";
-    console.log("Triggering predictions from:", API_URL + ENDPOINTS.triggerPredictions);
+    if (isClient) {
+      safeLog("Triggering predictions from:", API_URL + ENDPOINTS.triggerPredictions);
+    }
     
     // Try direct axios call first to bypass any middleware issues
     const directResponse = await axios.get(API_URL + ENDPOINTS.triggerPredictions);
@@ -470,7 +559,7 @@ export async function triggerPredictions(): Promise<{ success: boolean; message:
     }
     
     // Clear all caches to ensure fresh data on next fetch
-    if (typeof window !== 'undefined') {
+    if (isClient) {
       sessionStorage.removeItem(CACHE_KEYS.FORECAST);
       sessionStorage.removeItem(CACHE_KEYS.NORMAL_PREDICTIONS);
       sessionStorage.removeItem(CACHE_KEYS.TODAY_FORECAST);
@@ -482,7 +571,7 @@ export async function triggerPredictions(): Promise<{ success: boolean; message:
       message: 'Successfully triggered new predictions'
     };
   } catch (error) {
-    console.error("Failed to trigger predictions:", error);
+    safeError("Failed to trigger predictions:", error);
     return {
       success: false,
       message: 'Failed to trigger new predictions. Please try again later.'
@@ -498,25 +587,76 @@ export function clearForecastCaches(): void {
     sessionStorage.removeItem(key);
   });
   
-  console.log('All forecast caches cleared');
+  safeLog('All forecast caches cleared');
 }
 
 // Function to prefetch data in background (for use during navigation)
 export async function prefetchForecastData(): Promise<void> {
+  // Check if we're on the client side
+  if (typeof window === 'undefined') return;
+  
+  // Only prefetch if we're online
+  if (!navigator.onLine) return;
+  
+  // First, check if we already have cached data
+  const cachedForecast = getFromCache<WeeklyForecast>(CACHE_KEYS.FORECAST);
+  
   try {
-    console.log('Prefetching forecast data in background');
-    // Start requests but don't await them
-    const promises = [
-      getTodayForecast(true),
-      getForecastTrends('drought', 7, true),
-      getForecastTrends('flood', 7, true)
-    ];
+    // Fetch forecast data in the background with a short timeout
+    const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://www.radaprojo.live";
+    safeLog("Prefetching forecast data...");
     
-    // Let them run in background
-    Promise.all(promises).catch(error => {
-      console.error('Background prefetch error:', error);
+    // Perform a faster, lower priority fetch for preloading
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout for prefetch
+    
+    const prefetchPromise = axios.get(API_URL + ENDPOINTS.predictions, {
+      signal: controller.signal,
+      headers: {
+        'Priority': 'low',
+        'Purpose': 'prefetch'
+      }
     });
+    
+    // Use Promise.race to handle both success and timeout gracefully
+    const response = await Promise.race([
+      prefetchPromise,
+      // Add a delay promise that resolves if we already have cached data
+      new Promise<{data: null}>(resolve => {
+        setTimeout(() => resolve({ data: null }), cachedForecast ? 1000 : 2000);
+      })
+    ]);
+    
+    clearTimeout(timeoutId);
+    
+    // Process response if we got one
+    if (response && 'data' in response && response.data) {
+      const data = response.data;
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const transformedData = {
+          forecasts: data.map(item => processForecastItem(item)),
+          lastUpdated: data[0]?.updated_at || new Date().toISOString(),
+        };
+        
+        // Cache the result
+        setToCache(CACHE_KEYS.FORECAST, transformedData);
+        safeLog("Successfully prefetched and cached forecast data");
+      }
+    }
   } catch (error) {
-    console.error('Error in prefetch:', error);
+    // Silently fail for prefetch - we don't want to disrupt the user experience
+    if (axios.isAxiosError(error) && error.name === 'AbortError') {
+      safeLog("Prefetch aborted due to timeout");
+    } else {
+      safeError("Error during prefetch:", error);
+    }
+  }
+  
+  // Also prefetch today's forecast data if needed
+  if (!getFromCache(CACHE_KEYS.TODAY_FORECAST)) {
+    try {
+      getTodayForecast(true).catch(() => {}); // Silently fail
+    } catch (e) {} // Ignore errors
   }
 }

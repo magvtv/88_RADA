@@ -1,4 +1,5 @@
-import { useAlertStore } from '../store/alertStore';
+// Type definitions for forecast data
+
 export interface WeatherData {
   drought_probability: number;
   flood_probability: number;

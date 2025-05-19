@@ -8,7 +8,7 @@ export interface DisasterForecast {
     end: string;
   };
   impact: {
-    level: AlertServerity;
+    level: AlertSeverity;
     description: string;
     affectedAreas: string[];
     recommendations: string[];
@@ -25,8 +25,17 @@ export interface Alert {
   source?: string;
   location?: {
     name: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
   };
   forecast?: DisasterForecast;
+  userTypeContent?: {
+    farmer?: string;
+    pastoralist?: string;
+    aid_organization?: string;
+  };
 }
 
 export interface AlertsState {

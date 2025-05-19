@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "@/components/ui/theme-provider";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useUserStore } from "@/store";
 import { NavIcons, UIIcons } from "@/components/ui/icons";
@@ -53,6 +53,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <Sidebar />
             </SheetContent>
           </Sheet>

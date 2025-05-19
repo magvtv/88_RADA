@@ -36,6 +36,7 @@ import {
   HelpCircle,
   ExternalLink,
   Loader2,
+  Globe,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,10 +56,24 @@ export const WeatherIcons: Record<string, LucideIcon> = {
   Foggy: CloudFog,
   Fog: CloudFog,
   Windy: Wind,
+  "Severe drought": Sun,
+  "Moderate drought": Sun,
+  "Mild drought": Sun,
+  "Severe flood": CloudRain,
+  "Moderate flood": CloudRain,
+  "Mild flood": CloudRain,
 };
 
 // Get weather icon by condition
 export function getWeatherIcon(condition: string): LucideIcon {
+  if (condition.includes('drought') && condition.includes('flood')) {
+    if (condition.includes('Severe drought') || 
+        (condition.includes('Moderate drought') && !condition.includes('Severe flood'))) {
+      return Sun;
+    }
+    return CloudRain;
+  }
+  
   return WeatherIcons[condition] || Cloud;
 }
 
@@ -89,6 +104,7 @@ export const ActionIcons = {
   Help: HelpCircle,
   ExternalLink,
   Loader: Loader2,
+  Globe,
 };
 
 // UI element icons
@@ -152,4 +168,5 @@ export {
   ArrowLeft,
   HelpCircle,
   ExternalLink,
+  Globe,
 };

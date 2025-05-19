@@ -14,6 +14,10 @@ export interface NLPResponse {
     date: string;
     summary: string;
   }[];
+  translations?: {
+    swahili?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 export interface ChatState {

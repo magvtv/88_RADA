@@ -81,7 +81,7 @@ export function ForecastCard({ forecast, isHighlighted = false }: ForecastCardPr
       <CardHeader className="pb-2">
         <CardTitle className="text-base sm:text-lg flex justify-between items-center">
           <span>{forecast.day || "Unknown"}</span>
-          <WeatherIcon className="h-6 w-6 text-primary" />
+          <WeatherIcon className={`h-6 w-6 ${droughtProb > floodProb ? 'text-amber-500' : 'text-blue-500'}`} />
         </CardTitle>
         <span className="text-sm text-muted-foreground">{formattedDate}</span>
       </CardHeader>
